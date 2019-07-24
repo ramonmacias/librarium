@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/ramonmacias/librarium/app/domain/repository"
+	"github.com/ramonmacias/librarium/internal/app/domain/repository"
 )
 
 type UserService struct {

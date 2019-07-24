@@ -1,6 +1,6 @@
 package repository
 
-import "github.com/ramonmacias/librarium/app/domain/model"
+import "github.com/ramonmacias/librarium/internal/app/domain/model"
 
 type UserRepository interface {
 	FindAll() ([]*model.User, error)

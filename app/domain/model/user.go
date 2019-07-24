@@ -15,3 +15,19 @@ func NewUser(id, email, name, lastName string) *User {
 		lastName: lastName,
 	}
 }
+
+func (u *User) GetID() string {
+	return u.id
+}
+
+func (u *User) GetName() string {
+	return u.name
+}
+
+func (u *User) GetEmail() string {
+	return u.email
+}
+
+func (u *User) GetLastName() string {
+	return u.lastName
+}

@@ -8,7 +8,7 @@ import (
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
 )
 
-type UserUsecase interface {
+type UserInteractor interface {
 	ListUser() ([]User, error)
 	RegisterUser(email, name, lastName string) error
 	RemoveUser(id string) error
@@ -22,19 +22,19 @@ type User struct {
 	LastName string
 }
 
-type userUsecase struct {
+type userInteractor struct {
 	repo    repository.UserRepository
 	service *service.UserService
 }
 
-func NewUserUsecase(repo repository.UserRepository, service *service.UserService) *userUsecase {
-	return &userUsecase{
+func NewUserInteractor(repo repository.UserRepository, service *service.UserService) *userInteractor {
+	return &userInteractor{
 		repo:    repo,
 		service: service,
 	}
 }
 
-func (u *userUsecase) ListUser() ([]*User, error) {
+func (u *userInteractor) ListUser() ([]*User, error) {
 	users, err := u.repo.FindAll()
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (u *userUsecase) ListUser() ([]*User, error) {
 	return toUser(users), nil
 }
 
-func (u *userUsecase) RegisterUser(email, name, lastName string) error {
+func (u *userInteractor) RegisterUser(email, name, lastName string) error {
 	uid, err := uuid.NewRandom()
 	if err != nil {
 		return err
@@ -57,12 +57,25 @@ func (u *userUsecase) RegisterUser(email, name, lastName string) error {
 	return nil
 }
 
-func (u *userUsecase) RemoveUser(id string) error {
-	return nil
+func (u *userInteractor) RemoveUser(id string) error {
+	user, err := u.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	return u.repo.Delete(user)
 }
 
-func (u *userUsecase) FindByID(id string) (*User, error) {
-	return nil, nil
+func (u *userInteractor) FindByID(id string) (*User, error) {
+	user, err := u.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return &User{
+		ID:       user.GetID(),
+		Name:     user.GetName(),
+		Email:    user.GetEmail(),
+		LastName: user.GetLastName(),
+	}, nil
 }
 
 func toUser(users []*model.User) []*User {

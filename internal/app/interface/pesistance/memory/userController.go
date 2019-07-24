@@ -7,7 +7,7 @@ import (
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
 )
 
-type userRepository struct {
+type userController struct {
 	mu    *sync.Mutex
 	users map[string]*User
 }
@@ -19,14 +19,14 @@ type User struct {
 	LastName string
 }
 
-func NewUserRepository() *userRepository {
-	return &userRepository{
+func NewUserRepository() *userController {
+	return &userController{
 		mu:    &sync.Mutex{},
 		users: map[string]*User{},
 	}
 }
 
-func (r *userRepository) FindAll() ([]*model.User, error) {
+func (r *userController) FindAll() ([]*model.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -39,7 +39,7 @@ func (r *userRepository) FindAll() ([]*model.User, error) {
 	return users, nil
 }
 
-func (r *userRepository) FindByEmail(email string) (*model.User, error) {
+func (r *userController) FindByEmail(email string) (*model.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -51,7 +51,7 @@ func (r *userRepository) FindByEmail(email string) (*model.User, error) {
 	return nil, nil
 }
 
-func (r *userRepository) FindByID(id string) (*model.User, error) {
+func (r *userController) FindByID(id string) (*model.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -62,7 +62,7 @@ func (r *userRepository) FindByID(id string) (*model.User, error) {
 	return model.NewUser(user.ID, user.Email, user.Name, user.LastName), nil
 }
 
-func (r *userRepository) Save(user *model.User) error {
+func (r *userController) Save(user *model.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -75,7 +75,7 @@ func (r *userRepository) Save(user *model.User) error {
 	return nil
 }
 
-func (r *userRepository) Delete(user *model.User) error {
+func (r *userController) Delete(user *model.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

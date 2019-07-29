@@ -9,7 +9,7 @@ import (
 )
 
 type UserInteractor interface {
-	ListUser() ([]User, error)
+	ListUser() ([]*User, error)
 	RegisterUser(email, name, lastName string) error
 	RemoveUser(id string) error
 	FindByID(id string) (*User, error)

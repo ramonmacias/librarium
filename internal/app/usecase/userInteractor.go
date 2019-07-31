@@ -69,6 +69,8 @@ func (u *userInteractor) FindByID(id string) (*User, error) {
 	user, err := u.repo.FindByID(id)
 	if err != nil {
 		return nil, err
+	} else if user == nil {
+		return nil, nil
 	}
 	return &User{
 		ID:       user.GetID(),

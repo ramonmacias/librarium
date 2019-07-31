@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
@@ -56,7 +57,7 @@ func (r userController) FindByID(id string) (*model.User, error) {
 
 	user, ok := r.users[id]
 	if !ok {
-		return nil, nil
+		return nil, fmt.Errorf("User with id: %s not found", id)
 	}
 	return model.NewUser(user.ID, user.Email, user.Name, user.LastName), nil
 }

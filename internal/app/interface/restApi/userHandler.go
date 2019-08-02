@@ -2,12 +2,14 @@ package restApi
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
 	"github.com/ramonmacias/librarium/internal/app/interface/persistance/memory"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistance/postgres"
 
 	"github.com/ramonmacias/librarium/internal/app/usecase"
 )
@@ -19,22 +21,37 @@ type UserRequestBody struct {
 }
 
 var (
-	interactor usecase.UserInteractor
+	memoryInteractor   usecase.UserInteractor
+	postgresInteractor usecase.UserInteractor
 )
 
 func init() {
-	interactor = usecase.NewUserInteractor(
+	memoryInteractor = usecase.NewUserInteractor(
 		*memory.NewUserController(),
 		service.NewUserService(memory.NewUserController()),
+	)
+	postgresInteractor = usecase.NewUserInteractor(
+		*postgres.NewUserController(nil),
+		service.NewUserService(postgres.NewUserController(nil)),
 	)
 }
 
 func ListAllUsers(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of ListAllUsers endpoint")
-	users, err := interactor.ListUser()
+	var err error
+	var users []*usecase.User
+
+	switch mux.Vars(r)["persistance_type"] {
+	case "memory":
+		users, err = memoryInteractor.ListUser()
+	case "postgres":
+		users, err = postgresInteractor.ListUser()
+	default:
+		err = fmt.Errorf("Persistance type not available")
+	}
 	if err != nil {
-		log.Printf("Error fetching all the users: %v", err)
-		w.WriteHeader(http.StatusConflict)
+		log.Printf("Error while try to find all the users: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -44,9 +61,18 @@ func ListAllUsers(w http.ResponseWriter, r *http.Request) {
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of Create User endpoint")
+	var err error
 	userRequest := &UserRequestBody{}
 	json.NewDecoder(r.Body).Decode(userRequest)
-	if err := interactor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName); err != nil {
+	switch mux.Vars(r)["persistance_type"] {
+	case "memory":
+		err = memoryInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)
+	case "postgres":
+		err = postgresInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)
+	default:
+		err = fmt.Errorf("Persistance type not available")
+	}
+	if err != nil {
 		log.Printf("Error while try to register a new user: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -56,7 +82,16 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 func RemoveUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of remove user endpoint")
-	if err := interactor.RemoveUser(mux.Vars(r)["id"]); err != nil {
+	var err error
+	switch mux.Vars(r)["persistance_type"] {
+	case "memory":
+		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
+	case "postgres":
+		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
+	default:
+		err = fmt.Errorf("Persistance type not available")
+	}
+	if err != nil {
 		log.Printf("Error removing a user: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -66,7 +101,7 @@ func RemoveUser(w http.ResponseWriter, r *http.Request) {
 
 func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of find user by ID endpoint")
-	user, err := interactor.FindByID(mux.Vars(r)["id"])
+	user, err := memoryInteractor.FindByID(mux.Vars(r)["id"])
 	if err != nil {
 		log.Printf("Error trying to find a user: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

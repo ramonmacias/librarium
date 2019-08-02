@@ -30,9 +30,10 @@ func init() {
 		*memory.NewUserController(),
 		service.NewUserService(memory.NewUserController()),
 	)
+	db := postgres.NewClient("localhost", "5432", "ramon", "librarium_database", "ramon_postgres_pass").Connect().DB()
 	postgresInteractor = usecase.NewUserInteractor(
-		*postgres.NewUserController(nil),
-		service.NewUserService(postgres.NewUserController(nil)),
+		*postgres.NewUserController(db),
+		service.NewUserService(postgres.NewUserController(db)),
 	)
 }
 
@@ -101,7 +102,17 @@ func RemoveUser(w http.ResponseWriter, r *http.Request) {
 
 func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of find user by ID endpoint")
-	user, err := memoryInteractor.FindByID(mux.Vars(r)["id"])
+	var err error
+	var user *usecase.User
+
+	switch mux.Vars(r)["persistance_type"] {
+	case "memory":
+		user, err = memoryInteractor.FindByID(mux.Vars(r)["id"])
+	case "postgres":
+		user, err = postgresInteractor.FindByID(mux.Vars(r)["id"])
+	default:
+		err = fmt.Errorf("Persistance type not available")
+	}
 	if err != nil {
 		log.Printf("Error trying to find a user: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

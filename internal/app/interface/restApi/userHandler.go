@@ -25,6 +25,10 @@ var (
 	postgresInteractor usecase.UserInteractor
 )
 
+const (
+	customPersistanceHeader = "X-Persistance-Type"
+)
+
 func init() {
 	memoryInteractor = usecase.NewUserInteractor(
 		*memory.NewUserController(),
@@ -42,7 +46,7 @@ func ListAllUsers(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var users []*usecase.User
 
-	switch mux.Vars(r)["persistance_type"] {
+	switch r.Header.Get(customPersistanceHeader) {
 	case "memory":
 		users, err = memoryInteractor.ListUser()
 	case "postgres":
@@ -65,7 +69,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 	userRequest := &UserRequestBody{}
 	json.NewDecoder(r.Body).Decode(userRequest)
-	switch mux.Vars(r)["persistance_type"] {
+	switch r.Header.Get(customPersistanceHeader) {
 	case "memory":
 		err = memoryInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)
 	case "postgres":
@@ -84,7 +88,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func RemoveUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of remove user endpoint")
 	var err error
-	switch mux.Vars(r)["persistance_type"] {
+	switch r.Header.Get(customPersistanceHeader) {
 	case "memory":
 		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
 	case "postgres":
@@ -105,7 +109,7 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var user *usecase.User
 
-	switch mux.Vars(r)["persistance_type"] {
+	switch r.Header.Get(customPersistanceHeader) {
 	case "memory":
 		user, err = memoryInteractor.FindByID(mux.Vars(r)["id"])
 	case "postgres":

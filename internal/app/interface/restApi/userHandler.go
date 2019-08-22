@@ -88,7 +88,7 @@ func RemoveUser(w http.ResponseWriter, r *http.Request) {
 	case "memory":
 		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
 	case "postgres":
-		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
+		err = postgresInteractor.RemoveUser(mux.Vars(r)["id"])
 	default:
 		err = fmt.Errorf("Persistance type not available")
 	}

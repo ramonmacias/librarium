@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"log"
+	"strconv"
+
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
 
 	"github.com/jinzhu/gorm"
@@ -40,20 +43,25 @@ func (r userController) FindAll() ([]*model.User, error) {
 func (r userController) FindByEmail(email string) (*model.User, error) {
 	var user User
 	if err := r.db.Where("email = ?", email).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return model.NewUser(string(user.ID), user.Email, user.Name, user.LastName), nil
 }
 
 func (r userController) FindByID(id string) (*model.User, error) {
+	log.Printf("Finding a user by ID: %s", id)
 	var user User
 	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
-	return model.NewUser(string(user.ID), user.Email, user.Name, user.LastName), nil
+	return model.NewUser(strconv.FormatUint(uint64(user.ID), 10), user.Email, user.Name, user.LastName), nil
 }
 
 func (r userController) Save(user *model.User) error {
+	log.Println("Save method postgres")
 	return r.db.Save(&User{
 		Email:    user.GetEmail(),
 		Name:     user.GetName(),
@@ -62,5 +70,6 @@ func (r userController) Save(user *model.User) error {
 }
 
 func (r userController) Delete(user *model.User) error {
+	log.Printf("User ID: %s", user.GetID())
 	return r.db.Where("id = ?", user.GetID()).Delete(&User{}).Error
 }

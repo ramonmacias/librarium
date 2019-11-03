@@ -9,7 +9,7 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ramonmacias/librarium/internal/app/interface/restApi"
+	"github.com/ramonmacias/librarium/internal/app/interface/api"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	flag.DurationVar(&wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	flag.Parse()
 
-	r := restApi.BuildRouter()
+	r := api.BuildRouter()
 
 	srv := &http.Server{
 		Addr: "0.0.0.0:8080",

@@ -7,5 +7,5 @@ type BookRepository interface {
 	FindByID(id string) (*model.Book, error)
 	FindByISBN(ISBN string) (*model.Book, error)
 	Save(*model.Book) error
-	Delete(*model.Book) error
+	Delete(id string) error
 }

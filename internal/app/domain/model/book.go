@@ -5,4 +5,5 @@ type Book interface {
 	GetTitle() string
 	GetISBN() string
 	GetPrice() float64
+	GetUser() *User
 }

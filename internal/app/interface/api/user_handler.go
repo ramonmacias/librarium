@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
@@ -15,9 +16,9 @@ import (
 )
 
 type UserRequestBody struct {
-	Email    string `json:email`
-	Name     string `json:name`
-	LastName string `json:lastName`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	LastName string `json:"lastName"`
 }
 
 var (
@@ -34,7 +35,7 @@ func init() {
 		*memory.NewUserController(),
 		service.NewUserService(memory.NewUserController()),
 	)
-	db := postgres.NewClient("localhost", "5432", "ramon", "librarium_database", "ramon_postgres_pass").Connect().DB()
+	db := postgres.NewClient(os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DATABASE"), os.Getenv("POSTGRES_PASSWORD")).Connect().DB()
 	postgresInteractor = usecase.NewUserInteractor(
 		*postgres.NewUserController(db),
 		service.NewUserService(postgres.NewUserController(db)),

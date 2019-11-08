@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ramonmacias/librarium/internal/app/interface/persistance/postgres"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistence/postgres"
 )
 
 func main() {

@@ -7,11 +7,11 @@ import (
 )
 
 type BookInteractor interface {
-	ListBooks() ([]*model.Book, error)
+	ListBooks() ([]model.Book, error)
 	RegisterBook(book model.Book) error
 	UpdateBook(book model.Book) error
 	RemoveBook(id string) error
-	FindByID(id string) (*model.Book, error)
+	FindByID(id string) (model.Book, error)
 }
 
 type bookInteractor struct {
@@ -26,7 +26,7 @@ func NewBookInteractor(repo repository.BookRepository, service *service.BookServ
 	}
 }
 
-func (b *bookInteractor) ListBooks() ([]*model.Book, error) {
+func (b *bookInteractor) ListBooks() ([]model.Book, error) {
 	books, err := b.repo.FindAll()
 	if err != nil {
 		return nil, err
@@ -49,6 +49,6 @@ func (b *bookInteractor) RemoveBook(id string) error {
 	return b.repo.Delete(id)
 }
 
-func (b *bookInteractor) FindByID(id string) (*model.Book, error) {
+func (b *bookInteractor) FindByID(id string) (model.Book, error) {
 	return b.repo.FindByID(id)
 }

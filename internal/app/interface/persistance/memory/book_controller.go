@@ -3,18 +3,47 @@ package memory
 import (
 	"sync"
 
+	"github.com/google/uuid"
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
 )
 
+type Book struct {
+	ID    string
+	Title string
+	ISBN  string
+	Price float64
+	User  *model.User
+}
+
+func (b Book) GetID() string {
+	return b.ID
+}
+
+func (b Book) GetTitle() string {
+	return b.Title
+}
+
+func (b Book) GetISBN() string {
+	return b.ISBN
+}
+
+func (b Book) GetPrice() float64 {
+	return b.Price
+}
+
+func (b Book) GetUser() *model.User {
+	return b.User
+}
+
 type bookController struct {
 	mu    *sync.Mutex
-	books map[string]model.Book
+	books map[string]Book
 }
 
 func NewBookController() *bookController {
 	return &bookController{
 		mu:    &sync.Mutex{},
-		books: map[string]model.Book{},
+		books: map[string]Book{},
 	}
 }
 
@@ -58,7 +87,28 @@ func (r bookController) Save(book model.Book) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.books[book.GetID()] = book
+	if book.GetID() != "" {
+		r.books[book.GetID()] = Book{
+			ID:    book.GetID(),
+			Title: book.GetTitle(),
+			ISBN:  book.GetISBN(),
+			Price: book.GetPrice(),
+			User:  book.GetUser(),
+		}
+	} else {
+		uid, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+		r.books[uid.String()] = Book{
+			ID:    uid.String(),
+			Title: book.GetTitle(),
+			ISBN:  book.GetISBN(),
+			Price: book.GetPrice(),
+			User:  book.GetUser(),
+		}
+	}
+
 	return nil
 }
 

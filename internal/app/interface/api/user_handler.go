@@ -70,6 +70,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 	userRequest := &UserRequestBody{}
 	json.NewDecoder(r.Body).Decode(userRequest)
+	defer r.Body.Close()
+
 	switch r.Header.Get(customPersistanceHeader) {
 	case "memory":
 		err = memoryInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)

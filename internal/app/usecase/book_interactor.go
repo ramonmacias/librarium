@@ -38,11 +38,11 @@ func (b *bookInteractor) RegisterBook(book model.Book) error {
 	if err := b.service.Duplicated(book.GetISBN()); err != nil {
 		return err
 	}
-	return b.repo.Save(&book)
+	return b.repo.Save(book)
 }
 
 func (b *bookInteractor) UpdateBook(book model.Book) error {
-	return b.repo.Save(&book)
+	return b.repo.Save(book)
 }
 
 func (b *bookInteractor) RemoveBook(id string) error {

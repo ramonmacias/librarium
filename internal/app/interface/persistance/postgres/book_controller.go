@@ -63,17 +63,32 @@ func (r bookController) FindAll() ([]model.Book, error) {
 }
 
 func (r bookController) FindByID(id string) (model.Book, error) {
-	return nil, nil
+	var book Book
+	if err := r.db.First(&book, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return book, nil
 }
 
 func (r bookController) FindByISBN(ISBN string) (model.Book, error) {
-	return nil, nil
+	var book Book
+	if err := r.db.Where("isbn = ?", ISBN).First(&book).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return book, nil
 }
 
 func (r bookController) Save(book model.Book) error {
-	return nil
+	return r.db.Save(&Book{
+		Title: book.GetTitle(),
+		ISBN:  book.GetISBN(),
+		Price: book.GetPrice(),
+	}).Error
 }
 
 func (r bookController) Delete(id string) error {
-	return nil
+	return r.db.Where("id = ?", id).Delete(&Book{}).Error
 }

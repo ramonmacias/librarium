@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
-	"github.com/ramonmacias/librarium/internal/app/interface/persistance/memory"
-	"github.com/ramonmacias/librarium/internal/app/interface/persistance/postgres"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistence/memory"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistence/postgres"
 
 	"github.com/ramonmacias/librarium/internal/app/usecase"
 )
@@ -27,7 +27,7 @@ var (
 )
 
 const (
-	customPersistanceHeader = "X-Persistance-Type"
+	customPersistenceHeader = "X-Persistence-Type"
 )
 
 func init() {
@@ -47,13 +47,13 @@ func ListAllUsers(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var users []*usecase.User
 
-	switch r.Header.Get(customPersistanceHeader) {
+	switch r.Header.Get(customPersistenceHeader) {
 	case "memory":
 		users, err = memoryInteractor.ListUser()
 	case "postgres":
 		users, err = postgresInteractor.ListUser()
 	default:
-		err = fmt.Errorf("Persistance type not available")
+		err = fmt.Errorf("Persistence type not available")
 	}
 	if err != nil {
 		log.Printf("Error while try to find all the users: %v", err)
@@ -72,13 +72,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(userRequest)
 	defer r.Body.Close()
 
-	switch r.Header.Get(customPersistanceHeader) {
+	switch r.Header.Get(customPersistenceHeader) {
 	case "memory":
 		err = memoryInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)
 	case "postgres":
 		err = postgresInteractor.RegisterUser(userRequest.Email, userRequest.Name, userRequest.LastName)
 	default:
-		err = fmt.Errorf("Persistance type not available")
+		err = fmt.Errorf("Persistence type not available")
 	}
 	if err != nil {
 		log.Printf("Error while try to register a new user: %v", err)
@@ -91,13 +91,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func RemoveUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Init of remove user endpoint")
 	var err error
-	switch r.Header.Get(customPersistanceHeader) {
+	switch r.Header.Get(customPersistenceHeader) {
 	case "memory":
 		err = memoryInteractor.RemoveUser(mux.Vars(r)["id"])
 	case "postgres":
 		err = postgresInteractor.RemoveUser(mux.Vars(r)["id"])
 	default:
-		err = fmt.Errorf("Persistance type not available")
+		err = fmt.Errorf("Persistence type not available")
 	}
 	if err != nil {
 		log.Printf("Error removing a user: %v", err)
@@ -112,13 +112,13 @@ func FindUserByID(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var user *usecase.User
 
-	switch r.Header.Get(customPersistanceHeader) {
+	switch r.Header.Get(customPersistenceHeader) {
 	case "memory":
 		user, err = memoryInteractor.FindByID(mux.Vars(r)["id"])
 	case "postgres":
 		user, err = postgresInteractor.FindByID(mux.Vars(r)["id"])
 	default:
-		err = fmt.Errorf("Persistance type not available")
+		err = fmt.Errorf("Persistence type not available")
 	}
 	if err != nil {
 		log.Printf("Error trying to find a user: %v", err)

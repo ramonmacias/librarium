@@ -2,13 +2,16 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
-	"github.com/ramonmacias/librarium/internal/app/interface/persistance/memory"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistence/memory"
+	"github.com/ramonmacias/librarium/internal/app/interface/persistence/postgres"
 	"github.com/ramonmacias/librarium/internal/app/usecase"
 )
 
@@ -41,7 +44,8 @@ func (b BookRequestBody) GetUser() *model.User {
 }
 
 var (
-	memoryBookInteractor usecase.BookInteractor
+	memoryBookInteractor   usecase.BookInteractor
+	postgresBookInteractor usecase.BookInteractor
 )
 
 func init() {
@@ -49,13 +53,30 @@ func init() {
 		*memory.NewBookController(),
 		service.NewBookService(memory.NewBookController()),
 	)
+	db := postgres.NewClient(os.Getenv("POSTGRES_HOST"), os.Getenv("POSTGRES_PORT"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_DATABASE"), os.Getenv("POSTGRES_PASSWORD")).Connect().DB()
+	postgresBookInteractor = usecase.NewBookInteractor(
+		*postgres.NewBookController(db),
+		service.NewBookService(postgres.NewBookController(db)),
+	)
 }
 
 func ListAllBooks(w http.ResponseWriter, r *http.Request) {
-	books, err := memoryBookInteractor.ListBooks()
+	var err error
+	var books []model.Book
+
+	switch r.Header.Get(customPersistenceHeader) {
+	case "memory":
+		books, err = memoryBookInteractor.ListBooks()
+	case "postgres":
+		books, err = postgresBookInteractor.ListBooks()
+	default:
+		err = fmt.Errorf("Persistence type not available")
+	}
+
 	if err != nil {
 		log.Printf("Error while try to find all the books: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
 	"github.com/ramonmacias/librarium/internal/app/domain/service"
 	"github.com/ramonmacias/librarium/internal/app/interface/persistance/memory"
@@ -76,7 +77,26 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveBook(w http.ResponseWriter, r *http.Request) {
+	err := memoryBookInteractor.RemoveBook(mux.Vars(r)["id"])
+	if err != nil {
+		log.Printf("Error while try to remove a book: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func FindBookByID(w http.ResponseWriter, r *http.Request) {
+	book, err := memoryBookInteractor.FindByID(mux.Vars(r)["id"])
+	if err != nil {
+		log.Printf("Error trying to find a book: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	} else if book == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(book)
 }

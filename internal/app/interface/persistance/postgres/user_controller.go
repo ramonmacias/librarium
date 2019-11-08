@@ -18,6 +18,7 @@ type User struct {
 	Email    string
 	Name     string
 	LastName string
+	Books    []Book
 }
 
 func NewUserController(db *gorm.DB) *userController {

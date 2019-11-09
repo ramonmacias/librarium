@@ -84,11 +84,19 @@ func ListAllBooks(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateBook(w http.ResponseWriter, r *http.Request) {
+	var err error
 	bookRequest := &BookRequestBody{}
 	json.NewDecoder(r.Body).Decode(bookRequest)
 	defer r.Body.Close()
 
-	err := memoryBookInteractor.RegisterBook(bookRequest)
+	switch r.Header.Get(customPersistenceHeader) {
+	case "memory":
+		err = memoryBookInteractor.RegisterBook(bookRequest)
+	case "postgres":
+		err = postgresBookInteractor.RegisterBook(bookRequest)
+	default:
+		err = fmt.Errorf("Persistence type not available")
+	}
 	if err != nil {
 		log.Printf("Error while try to register a new book: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -98,7 +106,17 @@ func CreateBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveBook(w http.ResponseWriter, r *http.Request) {
-	err := memoryBookInteractor.RemoveBook(mux.Vars(r)["id"])
+	var err error
+
+	switch r.Header.Get(customPersistenceHeader) {
+	case "memory":
+		err = memoryBookInteractor.RemoveBook(mux.Vars(r)["id"])
+	case "postgres":
+		err = postgresBookInteractor.RemoveBook(mux.Vars(r)["id"])
+	default:
+		err = fmt.Errorf("Persistence type not available")
+	}
+
 	if err != nil {
 		log.Printf("Error while try to remove a book: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -108,7 +126,18 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindBookByID(w http.ResponseWriter, r *http.Request) {
-	book, err := memoryBookInteractor.FindByID(mux.Vars(r)["id"])
+	var err error
+	var book model.Book
+
+	switch r.Header.Get(customPersistenceHeader) {
+	case "memory":
+		book, err = memoryBookInteractor.FindByID(mux.Vars(r)["id"])
+	case "postgres":
+		book, err = postgresBookInteractor.FindByID(mux.Vars(r)["id"])
+	default:
+		err = fmt.Errorf("Persistence type not available")
+	}
+
 	if err != nil {
 		log.Printf("Error trying to find a book: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

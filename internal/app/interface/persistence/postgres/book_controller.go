@@ -52,13 +52,12 @@ func (r bookController) FindAll() ([]model.Book, error) {
 		return nil, err
 	}
 	books := make([]model.Book, len(fetchedBooks))
-	i := 0
-	for _, book := range fetchedBooks {
+	for i, book := range fetchedBooks {
 		books[i] = book
-		i++
 	}
 	return books, nil
 	// TODO this one not works, but I think it should work I don't know why
+	// the answer is here https://stackoverflow.com/questions/12994679/slice-of-struct-slice-of-interface-it-implements
 	// return fetchedBooks, nil
 }
 

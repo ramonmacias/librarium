@@ -16,6 +16,7 @@ import (
 )
 
 type BookRequestBody struct {
+	ID    string  `json:"id"`
 	Title string  `json:"title"`
 	ISBN  string  `json:"isbn"`
 	Price float64 `json:"price"`
@@ -23,7 +24,7 @@ type BookRequestBody struct {
 
 //TODO Thing more about this, it makes no sense
 func (b BookRequestBody) GetID() string {
-	return ""
+	return b.ID
 }
 
 func (b BookRequestBody) GetTitle() string {
@@ -78,9 +79,19 @@ func ListAllBooks(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	booksResult := make([]BookRequestBody, len(books))
+	for i, book := range books {
+		booksResult[i] = BookRequestBody{
+			ID:    book.GetID(),
+			Title: book.GetTitle(),
+			ISBN:  book.GetISBN(),
+			Price: book.GetPrice(),
+		}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(books)
+	json.NewEncoder(w).Encode(booksResult)
 }
 
 func CreateBook(w http.ResponseWriter, r *http.Request) {
@@ -148,5 +159,10 @@ func FindBookByID(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(book)
+	json.NewEncoder(w).Encode(&BookRequestBody{
+		ID:    book.GetID(),
+		Title: book.GetTitle(),
+		ISBN:  book.GetISBN(),
+		Price: book.GetPrice(),
+	})
 }

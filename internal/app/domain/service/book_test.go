@@ -1,9 +1,10 @@
-package service
+package service_test
 
 import (
 	"testing"
 
 	"github.com/ramonmacias/librarium/internal/app/domain/model"
+	"github.com/ramonmacias/librarium/internal/app/domain/service"
 )
 
 type FakeBookModel struct{}
@@ -54,6 +55,22 @@ func (f FakeBookRepository) Delete(id string) error {
 	return nil
 }
 
-func TestDuplicated(t *testing.T) {
+var (
+	bookService *service.BookService
+)
 
+func init() {
+	bookService = service.NewBookService(&FakeBookRepository{})
+}
+
+func TestDuplicatedBook(t *testing.T) {
+	var res error
+	res = bookService.Duplicated("IsbnNotExists")
+	if res != nil {
+		t.Errorf("Duplicated should return nothing but returns %v", res)
+	}
+	res = bookService.Duplicated("IsbnMustExist")
+	if res == nil {
+		t.Error("Duplicated should returns an error but returns nothing")
+	}
 }

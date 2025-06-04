@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "librarium/internal/http"
 
+func main() {
+	http.ListenAndServe()
 }

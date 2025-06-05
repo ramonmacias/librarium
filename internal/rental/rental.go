@@ -11,17 +11,24 @@ import (
 )
 
 const (
-	maxNumberOfRentals = 5
+	maxNumberOfRentals        = 5
+	maxNumberOfExtendedMonths = 3
 )
 
+// RentalStatus defines the different states a rental might have
 type RentalStatus string
 
 const (
-	RentalStatusActive   RentalStatus = "ACTIVE"
+	// RentalStatusActive indicates that the rental is alive and waiting to be returned
+	RentalStatusActive RentalStatus = "ACTIVE"
+	// RentalStatusReturned indicates that the rental was ended successfully
 	RentalStatusReturned RentalStatus = "RETURNED"
-	RentalStatusOverdue  RentalStatus = "OVERDUE"
+	// RentalStatusOverdue indicates that the rental was not returned in the expected due date
+	RentalStatusOverdue RentalStatus = "OVERDUE"
 )
 
+// Rental defines the concept of renting an asset catalog, this is the relationship
+// between a customer and an asset withing a period of time
 type Rental struct {
 	ID         uuid.UUID    // Unique rental ID
 	CustomerID uuid.UUID    // Reference to the customer who rented the asset
@@ -32,9 +39,14 @@ type Rental struct {
 	Status     RentalStatus // Enum: Active, Returned, Overdue, etc.
 }
 
+// Rent creates a new rental between the customer and the asset given.
+// This function checks if the customer already reached the max number of rentals per customer, if the
+// asset catalog is already rented and if the customer has the appropiate status to rent any asset, for all those
+// checks the function returns specific errors.
+// If not constraints are broken, the function return an active rental and no error.
 func Rent(customer *user.Customer, asset *catalog.Asset, activeRental *Rental, customerRentals []*Rental) (*Rental, error) {
 	if activeRental != nil {
-		return nil, errors.New("catalog item already rented")
+		return nil, errors.New("catalog asset already rented")
 	}
 	if len(customerRentals) >= maxNumberOfRentals {
 		return nil, errors.New("customer max number of rentals reached")
@@ -54,4 +66,40 @@ func Rent(customer *user.Customer, asset *catalog.Asset, activeRental *Rental, c
 		DueAt:      time.Now().AddDate(0, 1, 0), // 1 month per rental
 		Status:     RentalStatusActive,
 	}, nil
+}
+
+// Return function defined the action when we close a rental by returning the asset rented.
+// It only checks if the provided rental was already returned, returning an error if so.
+// If the function success then we return a rental with the final returned status and
+// the returnedAt timestamps updated.
+func Return(r *Rental) (*Rental, error) {
+	if r.Status == RentalStatusReturned {
+		return nil, errors.New("the rental is already returned")
+	}
+
+	r.Status = RentalStatusReturned
+	now := time.Now().UTC()
+	r.ReturnedAt = &now
+	return r, nil
+}
+
+// Extend function expands the rental time of the provided rental.
+// It checks if by trying to expand the rental we reached the max time.
+// The extend is in a monthly basis, meaning we will expand one month each
+// time we call this function.
+// If the rental is already returned or we reach the max number of rental months
+// the function returns an error.
+// Otherwise we return the rental with the status active and the updated due date.
+func Extend(r *Rental) (*Rental, error) {
+	if r.Status == RentalStatusReturned {
+		return nil, errors.New("the rental is already returned")
+	}
+
+	if r.RentedAt.Month()+1 > maxNumberOfExtendedMonths {
+		return nil, errors.New("extend max months reached")
+	}
+
+	r.Status = RentalStatusActive
+	r.DueAt = r.RentedAt.AddDate(0, 1, 0)
+	return r, nil
 }

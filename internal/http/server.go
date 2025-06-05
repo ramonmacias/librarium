@@ -63,20 +63,50 @@ func ListenAndServe() {
 	log.Println("Server shut down gracefully.")
 }
 
+// router defines all the routing to our API, currently we only allow the librarian
+// to access to it, so all the action will be taken by him.
 func router() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /foo", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("hello")
+	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
+
 	})
-	mux.HandleFunc("GET /foo/{id}", func(w http.ResponseWriter, r *http.Request) {
+	// Re think this part on signup customers and librarians? having a POST customers?
+	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("POST /catalog/items", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("DELETE /catalog/items/{id}", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("GET /catalog", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("GET /customers", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("POST /customers", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("PUT /customers/{id}/suspend", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("PUT /customers/{id}/unsuspend", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("GET /rentals", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("POST /rentals", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+	mux.HandleFunc("PUT /rentals/{id}/return", func(w http.ResponseWriter, r *http.Request) {
 		id := r.URL.Path[len("/foo/"):]
 		log.Println("ID is:", id)
 	})
-	mux.HandleFunc("GET /bar", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("hello bar")
-	})
-	mux.HandleFunc("POST /foo", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("hello post foo")
+	mux.HandleFunc("PUT /rentals/{id}/extend", func(w http.ResponseWriter, r *http.Request) {
+
 	})
 	return mux
 }

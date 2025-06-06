@@ -1,3 +1,19 @@
+// Package rental provides the domain logic for managing the rental lifecycle
+// of catalog assets by library customers.
+//
+// It defines the Rental entity to represent the relationship between a customer
+// and a catalog asset during a defined rental period. The package enforces key
+// business rules such as:
+//   - Maximum number of concurrent rentals per customer.
+//   - Restriction on overdue rentals.
+//   - Rental duration and extension limits.
+//
+// Key features include:
+//   - Rent: to initiate a rental, performing all necessary validations.
+//   - Return: to mark a rental as completed.
+//   - Extend: to allow limited extensions of the rental period.
+//
+// The package also includes rental status enumeration and constants for rental constraints.
 package rental
 
 import (

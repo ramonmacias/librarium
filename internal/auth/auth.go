@@ -1,3 +1,14 @@
+// Package auth provides authentication utilities for the Librarium system,
+// including JWT-based session generation and validation for librarian users.
+//
+// It includes the following key features:
+//   - Login flow that issues a signed JWT token containing librarian identity.
+//   - Session representation for tracking login state and expiration.
+//   - Secure password hashing and validation using bcrypt.
+//   - Token decoding and validation utilities to authenticate client requests.
+//
+// The JWT token is signed using a secret defined in the AUTH_SIGNING_KEY environment variable,
+// and includes standard claims such as subject (librarian ID), issuer, issued at, and expiration time.
 package auth
 
 import (
@@ -18,9 +29,9 @@ const (
 // LoginRequest defines the json payload needed to receive from
 // the client in order to trigger the login flow.
 type LoginRequest struct {
-	LibrarianID uuid.UUID `json:"librarian_id"`
-	Email       string    `json:"email"`
-	Password    string    `json:"password"`
+	LibrarianID uuid.UUID `json:"librarian_id"` // Unique librarian identifier
+	Email       string    `json:"email"`        // Email to be used as authentication
+	Password    string    `json:"password"`     // Password linked to the email to validate the auth
 }
 
 // Session holds the information that represents an auth session in the system.
@@ -29,9 +40,9 @@ type LoginRequest struct {
 // The token is baked using the JWT protocol.
 // This struct will be used as well as the login endpoint response.
 type Session struct {
-	LibrarianID uuid.UUID `json:"librarian_id"`
-	Token       string    `json:"token"`
-	ExpiresAt   time.Time `json:"expires_at"`
+	LibrarianID uuid.UUID `json:"librarian_id"` // Unique librarian identifier
+	Token       string    `json:"token"`        // Generate JWT token for handle auth
+	ExpiresAt   time.Time `json:"expires_at"`   // Moment when the token will be invalid
 }
 
 // Login runs the login flow for the provided librarian, the function

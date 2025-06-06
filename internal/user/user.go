@@ -1,3 +1,15 @@
+// Package user defines the core domain entities and logic for managing users
+// of the library system, including both customers and librarians.
+//
+// The package supports:
+//   - Representation and validation of library customers, including personal
+//     identification and contact information.
+//   - Representation and creation of librarians with secure credential handling.
+//   - Structs for user-related metadata such as contact details and physical addresses,
+//     each with validation methods to ensure data integrity.
+//
+// Builders for both Customer and Librarian enforce necessary constraints to guarantee
+// that required information is provided before persisting or using user records in the system.
 package user
 
 import (
@@ -58,13 +70,21 @@ type Librarian struct {
 // BuildLibrarian generates a new Librarian using the given data.
 // It returns an error if the provided data is missing or empty.
 // It returns no error and the librarian object created in case of success.
-func BuildLibrarian(name string) (*Librarian, error) {
+func BuildLibrarian(name, email, password string) (*Librarian, error) {
 	if name == "" {
 		return nil, errors.New("librarian name field is mandatory")
 	}
+	if email == "" {
+		return nil, errors.New("librarian email field is mandatory")
+	}
+	if password == "" {
+		return nil, errors.New("librarian password field is mandatory")
+	}
 	return &Librarian{
-		ID:   uuid.New(),
-		Name: name,
+		ID:       uuid.New(),
+		Name:     name,
+		Email:    email,
+		Password: password,
 	}, nil
 }
 

@@ -1,3 +1,17 @@
+// Package catalog provides types and functions to manage the library's item catalog.
+//
+// It defines a generic Asset model that can represent a variety of media types
+// available in the library, including books, magazines, newspapers, DVDs, CDs,
+// and video games. Each specific media type has its own struct representation.
+//
+// The package includes:
+//   - The Asset struct: a wrapper that categorizes and holds any catalog item.
+//   - Media-specific types: Book, Magazine, NewsPaper, DVD, CD, and VideoGame.
+//   - AssetCategory enum for classifying catalog items.
+//   - A BuildAsset factory function that instantiates an Asset from specific media data.
+//
+// This abstraction allows the system to treat different types of catalog items
+// uniformly while preserving their specific metadata.
 package catalog
 
 import (

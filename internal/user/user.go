@@ -49,8 +49,10 @@ func BuildCustomer(name, lastName, nationalID string, contactDetails *ContactDet
 // that is able to manage the library catalog and the customers
 // registered into the platform.
 type Librarian struct {
-	ID   uuid.UUID
-	Name string
+	ID       uuid.UUID
+	Name     string
+	Email    string
+	Password string
 }
 
 // BuildLibrarian generates a new Librarian using the given data.

@@ -61,10 +61,10 @@ func BuildCustomer(name, lastName, nationalID string, contactDetails *ContactDet
 // that is able to manage the library catalog and the customers
 // registered into the platform.
 type Librarian struct {
-	ID       uuid.UUID
-	Name     string
-	Email    string
-	Password string
+	ID       uuid.UUID // Unique identifier
+	Name     string    // Name of the librarian
+	Email    string    // Email of the librarian
+	Password string    // Password used by the librarian to auth
 }
 
 // BuildLibrarian generates a new Librarian using the given data.
@@ -139,8 +139,8 @@ func (cd *ContactDetails) validate() error {
 	return nil
 }
 
-// Repositry defines all the interactions between the user domain and the persistence layer
-type Repositry interface {
+// Repository defines all the interactions between the user domain and the persistence layer
+type Repository interface {
 	// CreateLibrarian inserts the provided librarian into the system.
 	// It returns an error in case of failure
 	CreateLibrarian(librarian *Librarian) error

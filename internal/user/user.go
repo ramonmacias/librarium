@@ -138,3 +138,13 @@ func (cd *ContactDetails) validate() error {
 	}
 	return nil
 }
+
+// Repositry defines all the interactions between the user domain and the persistence layer
+type Repositry interface {
+	// CreateLibrarian inserts the provided librarian into the system.
+	// It returns an error in case of failure
+	CreateLibrarian(librarian *Librarian) error
+	// CreateCustomer inserts the provided customer into the system.
+	// It returns an error in case of failure
+	CreateCustomer(customer *Customer) error
+}

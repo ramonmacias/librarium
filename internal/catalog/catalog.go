@@ -153,3 +153,14 @@ type VideoGame struct {
 	ReleasedAt time.Time // Date the game was released
 	AgeRating  string    // Age rating (e.g., "E", "T", "M")
 }
+
+// Repository defines all the interactions between the catalog domain and the persistence layer
+type Repository interface {
+	// CreateAsset inserts the provided asset into the database.
+	// It returns an error in case of failure.
+	CreateAsset(asset *Asset) error
+	// FindAssets looks for the assets already inserted in the database.
+	// Returns an empty slice and no error in case of no asset found.
+	// It returns an error if something fails.
+	FindAssets() ([]*Asset, error)
+}

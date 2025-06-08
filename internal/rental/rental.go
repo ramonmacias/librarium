@@ -119,3 +119,17 @@ func Extend(r *Rental) (*Rental, error) {
 	r.DueAt = r.RentedAt.AddDate(0, 1, 0)
 	return r, nil
 }
+
+// Repository defines all the interactions between the rental domain and the persistence layer
+type Repository interface {
+	// CreateRental inserts the provided rental into the database.
+	// It returns an error if something fails.
+	CreateRental(rental *Rental) error
+	// UpdateRental save the new data into the database with the provided rental.
+	// It returns an error if something fails.
+	UpdateRental(rental *Rental) error
+	// FindRentals retrieves the rentals already persisted into the database.
+	// It returns an empty slice and no error in case no rentals found.
+	// It returns an error if something fails.
+	FindRentals() ([]*Rental, error)
+}

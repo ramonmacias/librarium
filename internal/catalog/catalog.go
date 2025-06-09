@@ -46,16 +46,8 @@ type Asset struct {
 	ID        uuid.UUID     // Unique identifier for the asset
 	CreatedAt time.Time     // Timestamp of when the asset was created
 	UpdatedAt time.Time     // Timestamp of the last update to the asset
-	category  AssetCategory // Classification of the asset (e.g., Book, DVD)
-	info      any           // Holds the concrete asset data (e.g., a Book struct)
-}
-
-func (a *Asset) Category() AssetCategory {
-	return a.category
-}
-
-func (a *Asset) Info() any {
-	return a.info
+	Category  AssetCategory // Classification of the asset (e.g., Book, DVD)
+	Info      any           // Holds the concrete asset data (e.g., a Book struct)
 }
 
 // BuildAsset creates a new library catalog asset using the provided
@@ -73,23 +65,23 @@ func BuildAsset(info any) (*Asset, error) {
 
 	switch v := info.(type) {
 	case *Book:
-		a.category = AssetCategoryBook
-		a.info = v
+		a.Category = AssetCategoryBook
+		a.Info = v
 	case *Magazine:
-		a.category = AssetCategoryMagazine
-		a.info = v
+		a.Category = AssetCategoryMagazine
+		a.Info = v
 	case *NewsPaper:
-		a.category = AssetCategoryNewsPaper
-		a.info = v
+		a.Category = AssetCategoryNewsPaper
+		a.Info = v
 	case *DVD:
-		a.category = AssetCategoryDVD
-		a.info = v
+		a.Category = AssetCategoryDVD
+		a.Info = v
 	case *CD:
-		a.category = AssetCategoryCD
-		a.info = v
+		a.Category = AssetCategoryCD
+		a.Info = v
 	case *VideoGame:
-		a.category = AssetCategoryVideoGame
-		a.info = v
+		a.Category = AssetCategoryVideoGame
+		a.Info = v
 	default:
 		return nil, errors.New("asset category not allowed")
 	}

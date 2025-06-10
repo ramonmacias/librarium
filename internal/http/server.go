@@ -70,10 +70,6 @@ func router() *http.ServeMux {
 	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
 
 	})
-	// Re think this part on signup customers and librarians? having a POST customers?
-	mux.HandleFunc("POST /signup", func(w http.ResponseWriter, r *http.Request) {
-
-	})
 	mux.HandleFunc("POST /catalog/items", func(w http.ResponseWriter, r *http.Request) {
 
 	})

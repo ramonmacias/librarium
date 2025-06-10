@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"librarium/internal/user"
+
+	"github.com/google/uuid"
 )
 
 type userRepository struct {
@@ -60,4 +62,11 @@ func (us *userRepository) CreateCustomer(customer *user.Customer) error {
 	}
 
 	return nil
+}
+
+// GetLibrarian retrieves the librarian linked to the provided ID.
+// It return nil, nil in case we can't find the librarian.
+// It returns an error in case of failure.
+func (us *userRepository) GetLibrarian(id uuid.UUID) (*user.Librarian, error) {
+	return nil, nil
 }

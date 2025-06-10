@@ -14,6 +14,7 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"librarium/internal/user"
 	"os"
 	"time"
 
@@ -49,13 +50,21 @@ type Session struct {
 // will generate a session containing a jwt encrypted using the AUTH_SIGNING_KEY
 // envvar.
 // It returns an error if we fail while signing the token.
-func Login(librarianID uuid.UUID) (s *Session, err error) {
+func Login(loginReq *LoginRequest, librarian *user.Librarian) (s *Session, err error) {
+	hashedPass, err := HashPassword(loginReq.Password)
+	if err != nil {
+		return nil, err
+	}
+	if loginReq.Email != librarian.Email || hashedPass != librarian.Password {
+		return nil, errors.New("login bad credentials")
+	}
+
 	s = &Session{
-		LibrarianID: librarianID,
+		LibrarianID: librarian.ID,
 		ExpiresAt:   time.Now().UTC().Add(expiryDuration),
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
-		Subject:   librarianID.String(),
+		Subject:   librarian.ID.String(),
 		Issuer:    "librarium",
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),

@@ -30,9 +30,8 @@ const (
 // LoginRequest defines the json payload needed to receive from
 // the client in order to trigger the login flow.
 type LoginRequest struct {
-	LibrarianID uuid.UUID `json:"librarian_id"` // Unique librarian identifier
-	Email       string    `json:"email"`        // Email to be used as authentication
-	Password    string    `json:"password"`     // Password linked to the email to validate the auth
+	Email    string `json:"email"`    // Email to be used as authentication
+	Password string `json:"password"` // Password linked to the email to validate the auth
 }
 
 // Session holds the information that represents an auth session in the system.

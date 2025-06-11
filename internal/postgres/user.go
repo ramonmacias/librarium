@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	"librarium/internal/user"
-
-	"github.com/google/uuid"
 )
 
 type userRepository struct {
@@ -64,9 +62,15 @@ func (us *userRepository) CreateCustomer(customer *user.Customer) error {
 	return nil
 }
 
-// GetLibrarian retrieves the librarian linked to the provided ID.
+// GetLibrarianByEmail retrieves the librarian linked to the provided email.
 // It return nil, nil in case we can't find the librarian.
 // It returns an error in case of failure.
-func (us *userRepository) GetLibrarian(id uuid.UUID) (*user.Librarian, error) {
-	return nil, nil
+func (us *userRepository) GetLibrarianByEmail(email string) (*user.Librarian, error) {
+	librarian := &user.Librarian{}
+	err := us.db.QueryRow("SELECT id, name, email, password FROM librarians WHERE email = $1", email).Scan(librarian.ID, librarian.Name, librarian.Email, librarian.Password)
+	if err != nil {
+		return nil, fmt.Errorf("error getting librarian, with email %s err %w", email, err)
+	}
+
+	return librarian, nil
 }

@@ -71,6 +71,7 @@ func (s *Server) Shutdown() error {
 // to access to it, so all the action will be taken by him.
 func (s *Server) router() *http.ServeMux {
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
 	mux.HandleFunc("POST /catalog/items", func(w http.ResponseWriter, r *http.Request) {
 

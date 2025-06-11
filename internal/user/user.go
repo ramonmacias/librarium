@@ -147,8 +147,8 @@ type Repository interface {
 	// CreateCustomer inserts the provided customer into the system.
 	// It returns an error in case of failure
 	CreateCustomer(customer *Customer) error
-	// GetLibrarian retrieves the librarian linked to the provided ID.
+	// GetLibrarianByEmail retrieves the librarian linked to the provided email.
 	// It return nil, nil in case we can't find the librarian.
 	// It returns an error in case of failure.
-	GetLibrarian(id uuid.UUID) (*Librarian, error)
+	GetLibrarianByEmail(email string) (*Librarian, error)
 }

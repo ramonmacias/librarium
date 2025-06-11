@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"librarium/internal/auth"
+	"librarium/internal/onboarding"
 	"librarium/internal/user"
 )
 
@@ -35,7 +36,7 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	librarian, err := ac.userRepo.GetLibrarian(loginReq.LibrarianID)
+	librarian, err := ac.userRepo.GetLibrarianByEmail(loginReq.Email)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error getting librarian")
@@ -57,4 +58,43 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(session)
+}
+
+func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
+	librarianRequest := &onboarding.LibrarianRequest{}
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(librarianRequest); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error decoding signup request")
+		return
+	}
+
+	librarian, err := ac.userRepo.GetLibrarianByEmail(librarianRequest.Email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error getting librarian")
+		return
+	}
+	if librarian != nil {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode("email already registered")
+		return
+	}
+
+	librarian, err = onboarding.Librarian(librarianRequest)
+	if err != nil {
+		// TODO: Check on handle differently the errors based on type
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error onboarding librarian")
+		return
+	}
+
+	if err := ac.userRepo.CreateLibrarian(librarian); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error creating librarian")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(struct{ ID string }{ID: librarian.ID.String()})
 }

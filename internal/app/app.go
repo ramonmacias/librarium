@@ -20,6 +20,8 @@ const (
 	_readinessDrainDelay = 5 * time.Second
 )
 
+// Application holds all the dependencies needed by the librarium application
+// to start, run and close.
 type Application struct {
 	serverAddress string
 	server        *http.Server
@@ -36,6 +38,9 @@ type Application struct {
 	authController *http.AuthController
 }
 
+// NewLibrariumApplication builds a new librarium application using the provided
+// options as setup configuration.
+// It returns an error in case of failure.
 func NewLibrariumApplication(opts ...Option) (*Application, error) {
 	a := &Application{}
 	for _, opt := range opts {
@@ -46,9 +51,19 @@ func NewLibrariumApplication(opts ...Option) (*Application, error) {
 		return nil, fmt.Errorf("error setting up the application infra %w", err)
 	}
 
+	if err := a.setupDomain(); err != nil {
+		return nil, fmt.Errorf("error setting up the application domain %w", err)
+	}
+
+	if err := a.setupServer(); err != nil {
+		return nil, fmt.Errorf("error setting up the application server %w", err)
+	}
+
 	return a, nil
 }
 
+// Run starts the application, which in this case it starts an http server providing an API.
+// It listens
 func (a *Application) Run() {
 	// Setup signal context
 	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
@@ -60,8 +75,6 @@ func (a *Application) Run() {
 	stop()
 	a.isShuttingDown.Store(true)
 	log.Println("Received shutdown signal, shutting down.")
-
-	// TODO: We should close the db connection in here as well
 
 	// Give time for readiness check to propagate
 	time.Sleep(_readinessDrainDelay)

@@ -12,3 +12,11 @@ func WithDatabaseSource(ds *postgres.DataSource) Option {
 		a.databaseSource = ds
 	}
 }
+
+// WithServerAddress adds the provided address as the http server
+// address for this application
+func WithServerAddress(addr string) Option {
+	return func(a *Application) {
+		a.serverAddress = addr
+	}
+}

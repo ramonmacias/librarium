@@ -2,14 +2,28 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"librarium/internal/auth"
 	"librarium/internal/user"
 )
 
+// AuthController holds all the dependencies needed to
+// handle all the http requests related with auth domain.
 type AuthController struct {
 	userRepo user.Repository
+}
+
+// NewAuthController builds a new auth controller to handle http requests
+// using the given data, all the params received are mandatory.
+// It returns an error if some mandatory data is missing.
+func NewAuthController(userRepo user.Repository) (*AuthController, error) {
+	if userRepo == nil {
+		return nil, errors.New("user repository is mandatory for auth controller")
+	}
+
+	return &AuthController{userRepo}, nil
 }
 
 func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {

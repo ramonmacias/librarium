@@ -2,74 +2,76 @@ package http
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net"
 	"net/http"
-	"os/signal"
-	"sync/atomic"
-	"syscall"
 	"time"
 )
 
 const (
-	_shutdownPeriod      = 15 * time.Second
-	_shutdownHardPeriod  = 3 * time.Second
-	_readinessDrainDelay = 5 * time.Second
+	_shutdownPeriod = 15 * time.Second
 )
 
-var isShuttingDown atomic.Bool
+type Server struct {
+	address               string
+	srv                   *http.Server
+	stopOngoingGracefully context.CancelFunc
 
-func ListenAndServe() {
-	// Setup signal context
-	rootCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
+	authController *AuthController
+}
 
+// NewServer builds a new http.Server using the provided dependencies.
+// All the dependencies provided are mandatory, if we miss some of them an error
+// will be returned.
+func NewServer(address string, authController *AuthController) (*Server, error) {
+	if address == "" {
+		return nil, errors.New("http server address is mandatory")
+	}
+	if authController == nil {
+		return nil, errors.New("auth controller is mandatory")
+	}
+
+	return &Server{
+		address:        address,
+		authController: authController,
+	}, nil
+}
+
+func (s *Server) ListenAndServe() {
 	// Ensure in-flight requests aren't cancelled immediately on SIGTERM
 	ongoingCtx, stopOngoingGracefully := context.WithCancel(context.Background())
-	s := &http.Server{
+	s.srv = &http.Server{
 		Addr:    ":4000",
-		Handler: router(),
+		Handler: s.router(),
 		BaseContext: func(_ net.Listener) context.Context {
 			return ongoingCtx
 		},
 	}
+	s.stopOngoingGracefully = stopOngoingGracefully
 
 	go func() {
 		log.Println("server starting at :4000")
-		if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
+}
 
-	// Wait for signal
-	<-rootCtx.Done()
-	stop()
-	isShuttingDown.Store(true)
-	log.Println("Received shutdown signal, shutting down.")
-
-	// Give time for readiness check to propagate
-	time.Sleep(_readinessDrainDelay)
-	log.Println("Readiness check propagated, now waiting for ongoing requests to finish.")
-
+func (s *Server) Shutdown() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), _shutdownPeriod)
 	defer cancel()
-	err := s.Shutdown(shutdownCtx)
-	stopOngoingGracefully()
-	if err != nil {
-		log.Println("Failed to wait for ongoing requests to finish, waiting for forced cancellation.")
-		time.Sleep(_shutdownHardPeriod)
-	}
+	err := s.srv.Shutdown(shutdownCtx)
+	s.stopOngoingGracefully()
 
-	log.Println("Server shut down gracefully.")
+	return err
 }
 
 // router defines all the routing to our API, currently we only allow the librarian
 // to access to it, so all the action will be taken by him.
-func router() *http.ServeMux {
+func (s *Server) router() *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /login", func(w http.ResponseWriter, r *http.Request) {
-
-	})
+	mux.HandleFunc("POST /login", s.authController.Login)
 	mux.HandleFunc("POST /catalog/items", func(w http.ResponseWriter, r *http.Request) {
 
 	})

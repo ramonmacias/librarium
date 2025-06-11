@@ -1,7 +1,14 @@
 package main
 
-import "librarium/internal/http"
+import (
+	"librarium/internal/app"
+)
 
 func main() {
-	http.ListenAndServe()
+	application, err := app.NewLibrariumApplication()
+	if err != nil {
+		panic(err)
+	}
+
+	application.Run()
 }

@@ -2,12 +2,17 @@ package app
 
 import (
 	"context"
-	"librarium/internal/http"
+	"database/sql"
+	"fmt"
 	"log"
 	"os/signal"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"librarium/internal/http"
+	"librarium/internal/postgres"
+	"librarium/internal/user"
 )
 
 const (
@@ -16,13 +21,32 @@ const (
 )
 
 type Application struct {
-	server *http.Server
+	serverAddress string
+	server        *http.Server
 
 	isShuttingDown atomic.Bool
+
+	databaseSource *postgres.DataSource
+	db             *sql.DB
+
+	// Repositories
+	userRepo user.Repository
+
+	// Controllers
+	authController *http.AuthController
 }
 
-func NewLibrariumApplication() (*Application, error) {
-	return nil, nil
+func NewLibrariumApplication(opts ...Option) (*Application, error) {
+	a := &Application{}
+	for _, opt := range opts {
+		opt(a)
+	}
+
+	if err := a.setupInfra(); err != nil {
+		return nil, fmt.Errorf("error setting up the application infra %w", err)
+	}
+
+	return a, nil
 }
 
 func (a *Application) Run() {
@@ -46,6 +70,11 @@ func (a *Application) Run() {
 	err := a.server.Shutdown()
 	if err != nil {
 		log.Println("Failed to wait for ongoing requests to finish, waiting for forced cancellation.")
+		time.Sleep(_shutdownHardPeriod)
+	}
+	err = a.db.Close()
+	if err != nil {
+		log.Println("Failed to wait for ongoing database requests to finish, waiting for forced cancellation")
 		time.Sleep(_shutdownHardPeriod)
 	}
 

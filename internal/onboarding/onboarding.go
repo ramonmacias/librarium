@@ -22,9 +22,9 @@ import (
 // LibrarianRequest defines the needed data at the moment we want to
 // onboard a new librarian into the system.
 type LibrarianRequest struct {
-	Name     string // Name of the librarian
-	Email    string // Email of the librarian to be used for auth
-	Password string // Password linked to the provided info to handle auth
+	Name     string `json:"name"`     // Name of the librarian
+	Email    string `json:"email"`    // Email of the librarian to be used for auth
+	Password string `json:"password"` // Password linked to the provided info to handle auth
 }
 
 // Librarian function receives an onboarding.LibrarianRequest, call the auth

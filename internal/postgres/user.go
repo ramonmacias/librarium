@@ -67,8 +67,11 @@ func (us *userRepository) CreateCustomer(customer *user.Customer) error {
 // It returns an error in case of failure.
 func (us *userRepository) GetLibrarianByEmail(email string) (*user.Librarian, error) {
 	librarian := &user.Librarian{}
-	err := us.db.QueryRow("SELECT id, name, email, password FROM librarians WHERE email = $1", email).Scan(librarian.ID, librarian.Name, librarian.Email, librarian.Password)
+	err := us.db.QueryRow("SELECT id, name, email, password FROM librarians WHERE email = $1", email).Scan(&librarian.ID, &librarian.Name, &librarian.Email, &librarian.Password)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("error getting librarian, with email %s err %w", email, err)
 	}
 

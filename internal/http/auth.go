@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"librarium/internal/auth"
@@ -31,6 +32,7 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	loginReq := &auth.LoginRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(loginReq); err != nil {
+		log.Println("error decoding request while login", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("error decoding login request")
 		return
@@ -38,6 +40,7 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	librarian, err := ac.userRepo.GetLibrarianByEmail(loginReq.Email)
 	if err != nil {
+		log.Println("error getting librarian while login", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error getting librarian")
 		return
@@ -50,6 +53,7 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 
 	session, err := auth.Login(loginReq, librarian)
 	if err != nil {
+		log.Println("error while login", err)
 		// TODO: Check on handle differently the errors based on type
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error loging librarian")
@@ -64,6 +68,7 @@ func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
 	librarianRequest := &onboarding.LibrarianRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(librarianRequest); err != nil {
+		log.Println("error decoding request while signup", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("error decoding signup request")
 		return
@@ -71,6 +76,7 @@ func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
 
 	librarian, err := ac.userRepo.GetLibrarianByEmail(librarianRequest.Email)
 	if err != nil {
+		log.Println("error getting librarian while signup", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error getting librarian")
 		return
@@ -83,6 +89,7 @@ func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
 
 	librarian, err = onboarding.Librarian(librarianRequest)
 	if err != nil {
+		log.Println("error onboarding librarian while signup", err)
 		// TODO: Check on handle differently the errors based on type
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error onboarding librarian")
@@ -90,6 +97,7 @@ func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := ac.userRepo.CreateLibrarian(librarian); err != nil {
+		log.Println("error getting creating librarian while signup", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode("error creating librarian")
 		return

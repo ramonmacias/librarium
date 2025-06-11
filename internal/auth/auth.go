@@ -14,17 +14,18 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"librarium/internal/user"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
+
+	"librarium/internal/user"
 )
 
 const (
-	expiryDuration = 2 * time.Hour
+	expiryDuration = 4 * time.Hour
 )
 
 // LoginRequest defines the json payload needed to receive from
@@ -50,11 +51,7 @@ type Session struct {
 // envvar.
 // It returns an error if we fail while signing the token.
 func Login(loginReq *LoginRequest, librarian *user.Librarian) (s *Session, err error) {
-	hashedPass, err := HashPassword(loginReq.Password)
-	if err != nil {
-		return nil, err
-	}
-	if loginReq.Email != librarian.Email || hashedPass != librarian.Password {
+	if loginReq.Email != librarian.Email || CheckPassword(librarian.Password, loginReq.Password) != nil {
 		return nil, errors.New("login bad credentials")
 	}
 
@@ -68,7 +65,7 @@ func Login(loginReq *LoginRequest, librarian *user.Librarian) (s *Session, err e
 		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
 	})
-	s.Token, err = tok.SignedString(os.Getenv("AUTH_SIGNING_KEY"))
+	s.Token, err = tok.SignedString([]byte(os.Getenv("AUTH_SIGNING_KEY")))
 	if err != nil {
 		return nil, fmt.Errorf("error signing token %w", err)
 	}

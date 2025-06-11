@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -34,6 +35,7 @@ func (ds *DataSource) URL() string {
 // are sure the connection is alive before we try to reach the db.
 // It returns specific errors while openning and pinging.
 func OpenConnection(ds *DataSource) (*sql.DB, error) {
+	log.Println("connecting to the db", ds.URL())
 	db, err := sql.Open("postgres", ds.URL())
 	if err != nil {
 		return nil, fmt.Errorf("error while opening db connection %w", err)

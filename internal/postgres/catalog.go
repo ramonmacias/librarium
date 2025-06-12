@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"librarium/internal/catalog"
+
+	"github.com/google/uuid"
 )
 
 type catalogRepository struct {
@@ -45,6 +47,42 @@ func (cr *catalogRepository) CreateAsset(asset *catalog.Asset) error {
 	return nil
 }
 
+// DeleteAsset removes the asset linked to the given ID from the catalog.
+// It returns an error in case of failure.
+func (cr *catalogRepository) DeleteAsset(id uuid.UUID) error {
+	_, err := cr.db.Exec(
+		"DELETE FROM assets WHERE id = $1",
+		id.String(),
+	)
+	if err != nil {
+		return fmt.Errorf("error deleting asset catalog with id %s err %w", id.String(), err)
+	}
+
+	return nil
+}
+
+// GetAsset retrieves the asset linked to the given ID.
+// It returns nil, nil in case the asset cannot be found.
+// It returns an error in case of failure.
+func (cr *catalogRepository) GetAsset(id uuid.UUID) (*catalog.Asset, error) {
+	asset := &catalog.Asset{}
+	buf := []byte{}
+
+	err := cr.db.QueryRow("SELECT id, category, created_at, updated_at, info FROM assets WHERE id = $1", id.String()).Scan(&asset.ID, &asset.Category, &asset.CreatedAt, &asset.UpdatedAt, &buf)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error getting catalog asset, with id %s err %w", id.String(), err)
+	}
+	asset.Info, err = decodeAssetInfo(asset.Category, buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return asset, nil
+}
+
 // FindAssets looks for the assets already inserted in the database.
 // Returns an empty slice and no error in case of no asset found.
 // It returns an error if something fails.
@@ -60,7 +98,7 @@ func (cr *catalogRepository) FindAssets() ([]*catalog.Asset, error) {
 		asset := &catalog.Asset{}
 		buf := []byte{}
 
-		if err := rows.Scan(asset.ID, asset.Category, asset.CreatedAt, asset.UpdatedAt, buf); err != nil {
+		if err := rows.Scan(&asset.ID, &asset.Category, &asset.CreatedAt, &asset.UpdatedAt, &buf); err != nil {
 			return nil, fmt.Errorf("error scanning while finding assets %w", err)
 		}
 

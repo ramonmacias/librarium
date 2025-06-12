@@ -45,11 +45,11 @@ const (
 // Asset represents a generic item in the library catalog.
 // It can hold any type of media such as books, magazines, DVDs, etc.
 type Asset struct {
-	ID        uuid.UUID     // Unique identifier for the asset
-	CreatedAt time.Time     // Timestamp of when the asset was created
-	UpdatedAt time.Time     // Timestamp of the last update to the asset
-	Category  AssetCategory // Classification of the asset (e.g., Book, DVD)
-	Info      any           // Holds the concrete asset data (e.g., a Book struct)
+	ID        uuid.UUID     `json:"id"`         // Unique identifier for the asset
+	CreatedAt time.Time     `json:"created_at"` // Timestamp of when the asset was created
+	UpdatedAt time.Time     `json:"updated_at"` // Timestamp of the last update to the asset
+	Category  AssetCategory `json:"category"`   // Classification of the asset (e.g., Book, DVD)
+	Info      any           `json:"info"`       // Holds the concrete asset data (e.g., a Book struct)
 }
 
 // BuildAsset creates a new library catalog asset using the provided
@@ -92,60 +92,60 @@ func BuildAsset(info any) (*Asset, error) {
 
 // Book represents a book available in the library catalog.
 type Book struct {
-	Title       string    // Title of the book
-	Author      string    // Author of the book
-	Publisher   string    // Publisher of the book
-	ISBN        string    // International Standard Book Number
-	PageCount   int       // Number of pages in the book
-	PublishedAt time.Time // Date the book was published
+	Title       string    `json:"title"`        // Title of the book
+	Author      string    `json:"author"`       // Author of the book
+	Publisher   string    `json:"publisher"`    // Publisher of the book
+	ISBN        string    `json:"isbn"`         // International Standard Book Number
+	PageCount   int       `json:"page_count"`   // Number of pages in the book
+	PublishedAt time.Time `json:"published_at"` // Date the book was published
 }
 
 // Magazine represents a magazine issue in the library catalog.
 type Magazine struct {
-	Title       string    // Title of the magazine
-	Issue       string    // Specific issue identifier (e.g., "May 2025")
-	Publisher   string    // Publisher of the magazine
-	PublishedAt time.Time // Date the magazine was published
-	PageCount   int       // Number of pages in the magazine
+	Title       string    `json:"title"`        // Title of the magazine
+	Issue       string    `json:"issue"`        // Specific issue identifier (e.g., "May 2025")
+	Publisher   string    `json:"publisher"`    // Publisher of the magazine
+	PublishedAt time.Time `json:"published_at"` // Date the magazine was published
+	PageCount   int       `json:"page_count"`   // Number of pages in the magazine
 }
 
 // NewsPaper represents a newspaper edition in the library catalog.
 type NewsPaper struct {
-	Title       string    // Title of the newspaper
-	Edition     string    // Specific edition identifier (e.g., "Morning Edition")
-	Publisher   string    // Publisher of the newspaper
-	PublishedAt time.Time // Date the newspaper was published
-	PageCount   int       // Number of pages in the newspaper
+	Title       string    `json:"title"`        // Title of the newspaper
+	Edition     string    `json:"edition"`      // Specific edition identifier (e.g., "Morning Edition")
+	Publisher   string    `json:"publisher"`    // Publisher of the newspaper
+	PublishedAt time.Time `json:"published_at"` // Date the newspaper was published
+	PageCount   int       `json:"page_count"`   // Number of pages in the newspaper
 }
 
 // DVD represents a digital video disc in the library catalog.
 type DVD struct {
-	Title       string    // Title of the DVD
-	Director    string    // Director of the film
-	Producer    string    // Producer of the film
-	DurationMin int       // Duration of the film in minutes
-	RegionCode  string    // DVD region code (e.g., "Region 1")
-	ReleasedAt  time.Time // Date the DVD was released
+	Title       string    `json:"title"`        // Title of the DVD
+	Director    string    `json:"director"`     // Director of the film
+	Producer    string    `json:"producer"`     // Producer of the film
+	DurationMin int       `json:"duration_min"` // Duration of the film in minutes
+	RegionCode  string    `json:"region_code"`  // DVD region code (e.g., "Region 1")
+	ReleasedAt  time.Time `json:"released_at"`  // Date the DVD was released
 }
 
 // CD represents a compact disc in the library catalog.
 type CD struct {
-	Title       string    // Title of the album or CD
-	Artist      string    // Main performing artist or group
-	Label       string    // Record label
-	TrackCount  int       // Number of tracks on the CD
-	DurationMin int       // Total duration in minutes
-	ReleasedAt  time.Time // Date the CD was released
+	Title       string    `json:"title"`        // Title of the album or CD
+	Artist      string    `json:"artist"`       // Main performing artist or group
+	Label       string    `json:"label"`        // Record label
+	TrackCount  int       `json:"track_count"`  // Number of tracks on the CD
+	DurationMin int       `json:"duration_min"` // Total duration in minutes
+	ReleasedAt  time.Time `json:"released_at"`  // Date the CD was released
 }
 
 // VideoGame represents a video game item in the library catalog.
 type VideoGame struct {
-	Title      string    // Title of the video game
-	Developer  string    // Company or person that developed the game
-	Platform   string    // Platform the game runs on (e.g., "PlayStation", "PC")
-	Genre      string    // Genre of the game (e.g., "Action", "RPG")
-	ReleasedAt time.Time // Date the game was released
-	AgeRating  string    // Age rating (e.g., "E", "T", "M")
+	Title      string    `json:"title"`       // Title of the video game
+	Developer  string    `json:"developer"`   // Company or person that developed the game
+	Platform   string    `json:"platform"`    // Platform the game runs on (e.g., "PlayStation", "PC")
+	Genre      string    `json:"genre"`       // Genre of the game (e.g., "Action", "RPG")
+	ReleasedAt time.Time `json:"released_at"` // Date the game was released
+	AgeRating  string    `json:"age_rating"`  // Age rating (e.g., "E", "T", "M")
 }
 
 // Repository defines all the interactions between the catalog domain and the persistence layer
@@ -169,7 +169,7 @@ type Repository interface {
 // CreateAssetRequest decodes
 type CreateAssetRequest struct {
 	Category AssetCategory   `json:"category"` // e.g., "book", "magazine", etc.
-	Data     json.RawMessage `json:"data"`     // Raw JSON to decode later
+	Info     json.RawMessage `json:"info"`     // Raw JSON to decode later
 	Asset    any             `json:"-"`        // Will hold the decoded asset after unmarshall
 }
 
@@ -191,37 +191,37 @@ func (r *CreateAssetRequest) UnmarshalJSON(data []byte) error {
 	switch r.Category {
 	case AssetCategoryBook:
 		var book Book
-		if err := json.Unmarshal(r.Data, &book); err != nil {
+		if err := json.Unmarshal(r.Info, &book); err != nil {
 			return err
 		}
 		r.Asset = book
 	case AssetCategoryMagazine:
 		var mag Magazine
-		if err := json.Unmarshal(r.Data, &mag); err != nil {
+		if err := json.Unmarshal(r.Info, &mag); err != nil {
 			return err
 		}
 		r.Asset = mag
 	case AssetCategoryNewsPaper:
 		var news NewsPaper
-		if err := json.Unmarshal(r.Data, &news); err != nil {
+		if err := json.Unmarshal(r.Info, &news); err != nil {
 			return err
 		}
 		r.Asset = news
 	case AssetCategoryDVD:
 		var dvd DVD
-		if err := json.Unmarshal(r.Data, &dvd); err != nil {
+		if err := json.Unmarshal(r.Info, &dvd); err != nil {
 			return err
 		}
 		r.Asset = dvd
 	case AssetCategoryCD:
 		var cd CD
-		if err := json.Unmarshal(r.Data, &cd); err != nil {
+		if err := json.Unmarshal(r.Info, &cd); err != nil {
 			return err
 		}
 		r.Asset = cd
 	case AssetCategoryVideoGame:
 		var game VideoGame
-		if err := json.Unmarshal(r.Data, &game); err != nil {
+		if err := json.Unmarshal(r.Info, &game); err != nil {
 			return err
 		}
 		r.Asset = game

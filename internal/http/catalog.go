@@ -3,12 +3,13 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"librarium/internal/catalog"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/google/uuid"
+
+	"librarium/internal/catalog"
 )
 
 // CatalogController holds all the dependencies needed to
@@ -91,5 +92,14 @@ func (cc *CatalogController) DeleteCatalogAsset(w http.ResponseWriter, r *http.R
 }
 
 func (cc *CatalogController) FindCatalogAssets(w http.ResponseWriter, r *http.Request) {
+	assets, err := cc.catalogRepository.FindAssets()
+	if err != nil {
+		log.Println("error finding catalog assets", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error finding catalog assets")
+		return
+	}
 
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(assets)
 }

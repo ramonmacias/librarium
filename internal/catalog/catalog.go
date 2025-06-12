@@ -15,7 +15,9 @@
 package catalog
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -151,8 +153,81 @@ type Repository interface {
 	// CreateAsset inserts the provided asset into the database.
 	// It returns an error in case of failure.
 	CreateAsset(asset *Asset) error
+	// DeleteAsset removes the asset linked to the given ID from the catalog.
+	// It returns an error in case of failure.
+	DeleteAsset(id *Asset) error
+	// GetAsset retrieves the asset linked to the given ID.
+	// It returns nil, nil in case the asset cannot be found.
+	// It returns an error in case of failure.
+	GetAsset(id uuid.UUID) (*Asset, error)
 	// FindAssets looks for the assets already inserted in the database.
 	// Returns an empty slice and no error in case of no asset found.
 	// It returns an error if something fails.
 	FindAssets() ([]*Asset, error)
+}
+
+// CreateAssetRequest decodes
+type CreateAssetRequest struct {
+	Category AssetCategory   `json:"category"` // e.g., "book", "magazine", etc.
+	Data     json.RawMessage `json:"data"`     // Raw JSON to decode later
+	Asset    any             `json:"-"`        // Will hold the decoded asset after unmarshall
+}
+
+// UnmarshalJSON overrides the json unmarshaller so we can handle the dynamic type conversion
+// of assets in the json layer.
+func (r *CreateAssetRequest) UnmarshalJSON(data []byte) error {
+	// Alias to avoid recursion
+	type Alias CreateAssetRequest
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(r),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	switch r.Category {
+	case AssetCategoryBook:
+		var book Book
+		if err := json.Unmarshal(r.Data, &book); err != nil {
+			return err
+		}
+		r.Asset = book
+	case AssetCategoryMagazine:
+		var mag Magazine
+		if err := json.Unmarshal(r.Data, &mag); err != nil {
+			return err
+		}
+		r.Asset = mag
+	case AssetCategoryNewsPaper:
+		var news NewsPaper
+		if err := json.Unmarshal(r.Data, &news); err != nil {
+			return err
+		}
+		r.Asset = news
+	case AssetCategoryDVD:
+		var dvd DVD
+		if err := json.Unmarshal(r.Data, &dvd); err != nil {
+			return err
+		}
+		r.Asset = dvd
+	case AssetCategoryCD:
+		var cd CD
+		if err := json.Unmarshal(r.Data, &cd); err != nil {
+			return err
+		}
+		r.Asset = cd
+	case AssetCategoryVideoGame:
+		var game VideoGame
+		if err := json.Unmarshal(r.Data, &game); err != nil {
+			return err
+		}
+		r.Asset = game
+	default:
+		return fmt.Errorf("unknown category: %s", r.Category)
+	}
+
+	return nil
 }

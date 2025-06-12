@@ -73,13 +73,13 @@ func (s *Server) router() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
-	mux.HandleFunc("POST /catalog/items", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /catalog/assets", func(w http.ResponseWriter, r *http.Request) {
 
 	})
-	mux.HandleFunc("DELETE /catalog/items/{id}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("DELETE /catalog/assets/{id}", func(w http.ResponseWriter, r *http.Request) {
 
 	})
-	mux.HandleFunc("GET /catalog", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /catalog/assets", func(w http.ResponseWriter, r *http.Request) {
 
 	})
 	mux.HandleFunc("GET /customers", func(w http.ResponseWriter, r *http.Request) {

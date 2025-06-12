@@ -18,23 +18,28 @@ type Server struct {
 	srv                   *http.Server
 	stopOngoingGracefully context.CancelFunc
 
-	authController *AuthController
+	authController    *AuthController
+	catalogController *CatalogController
 }
 
 // NewServer builds a new http.Server using the provided dependencies.
 // All the dependencies provided are mandatory, if we miss some of them an error
 // will be returned.
-func NewServer(address string, authController *AuthController) (*Server, error) {
+func NewServer(address string, authController *AuthController, catalogController *CatalogController) (*Server, error) {
 	if address == "" {
 		return nil, errors.New("http server address is mandatory")
 	}
 	if authController == nil {
 		return nil, errors.New("auth controller is mandatory")
 	}
+	if catalogController == nil {
+		return nil, errors.New("catalog controller is mandatory")
+	}
 
 	return &Server{
-		address:        address,
-		authController: authController,
+		address:           address,
+		authController:    authController,
+		catalogController: catalogController,
 	}, nil
 }
 
@@ -73,15 +78,9 @@ func (s *Server) router() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
-	mux.HandleFunc("POST /catalog/assets", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("DELETE /catalog/assets/{id}", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("GET /catalog/assets", func(w http.ResponseWriter, r *http.Request) {
-
-	})
+	mux.HandleFunc("POST /catalog/assets", s.catalogController.CreateCatalogAsset)
+	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.DeleteCatalogAsset)
+	mux.HandleFunc("GET /catalog/assets", s.catalogController.FindCatalogAssets)
 	mux.HandleFunc("GET /customers", func(w http.ResponseWriter, r *http.Request) {
 
 	})

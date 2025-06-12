@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"librarium/internal/catalog"
 	"librarium/internal/http"
 	"librarium/internal/postgres"
 	"librarium/internal/user"
@@ -32,10 +33,12 @@ type Application struct {
 	db             *sql.DB
 
 	// Repositories
-	userRepo user.Repository
+	userRepo    user.Repository
+	catalogRepo catalog.Repository
 
 	// Controllers
-	authController *http.AuthController
+	authController    *http.AuthController
+	catalogController *http.CatalogController
 }
 
 // NewLibrariumApplication builds a new librarium application using the provided

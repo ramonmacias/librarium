@@ -10,8 +10,16 @@ func (a *Application) setupDomain() (err error) {
 	if err != nil {
 		return err
 	}
+	a.catalogRepo, err = postgres.NewCatalogRepository(a.db)
+	if err != nil {
+		return err
+	}
 
 	a.authController, err = http.NewAuthController(a.userRepo)
+	if err != nil {
+		return err
+	}
+	a.catalogController, err = http.NewCatalogController(a.catalogRepo)
 	if err != nil {
 		return err
 	}

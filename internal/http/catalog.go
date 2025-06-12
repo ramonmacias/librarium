@@ -6,6 +6,9 @@ import (
 	"librarium/internal/catalog"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 // CatalogController holds all the dependencies needed to
@@ -55,7 +58,36 @@ func (cc *CatalogController) CreateCatalogAsset(w http.ResponseWriter, r *http.R
 }
 
 func (cc *CatalogController) DeleteCatalogAsset(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) != 3 {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error getting asset ID from the url")
+		return
+	}
+	assetID, err := uuid.Parse(parts[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid asset ID format, expected UUID")
+		return
+	}
 
+	asset, err := cc.catalogRepository.GetAsset(assetID)
+	if err != nil {
+		log.Println("error getting asset catalog while deleting", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error getting asset catalog")
+		return
+	}
+
+	if err := cc.catalogRepository.DeleteAsset(asset.ID); err != nil {
+		log.Println("error deleting asset catalog", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error deleting asset catalog")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (cc *CatalogController) FindCatalogAssets(w http.ResponseWriter, r *http.Request) {

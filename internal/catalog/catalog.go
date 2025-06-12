@@ -155,7 +155,7 @@ type Repository interface {
 	CreateAsset(asset *Asset) error
 	// DeleteAsset removes the asset linked to the given ID from the catalog.
 	// It returns an error in case of failure.
-	DeleteAsset(id *Asset) error
+	DeleteAsset(id uuid.UUID) error
 	// GetAsset retrieves the asset linked to the given ID.
 	// It returns nil, nil in case the asset cannot be found.
 	// It returns an error in case of failure.

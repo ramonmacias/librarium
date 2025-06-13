@@ -61,8 +61,8 @@ type Asset struct {
 func BuildAsset(info any) (*Asset, error) {
 	a := &Asset{
 		ID:        uuid.New(),
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
 	}
 
 	switch v := info.(type) {
@@ -190,38 +190,38 @@ func (r *CreateAssetRequest) UnmarshalJSON(data []byte) error {
 
 	switch r.Category {
 	case AssetCategoryBook:
-		var book Book
-		if err := json.Unmarshal(r.Info, &book); err != nil {
+		book := &Book{}
+		if err := json.Unmarshal(r.Info, book); err != nil {
 			return err
 		}
 		r.Asset = book
 	case AssetCategoryMagazine:
-		var mag Magazine
-		if err := json.Unmarshal(r.Info, &mag); err != nil {
+		mag := &Magazine{}
+		if err := json.Unmarshal(r.Info, mag); err != nil {
 			return err
 		}
 		r.Asset = mag
 	case AssetCategoryNewsPaper:
-		var news NewsPaper
-		if err := json.Unmarshal(r.Info, &news); err != nil {
+		news := &NewsPaper{}
+		if err := json.Unmarshal(r.Info, news); err != nil {
 			return err
 		}
 		r.Asset = news
 	case AssetCategoryDVD:
-		var dvd DVD
-		if err := json.Unmarshal(r.Info, &dvd); err != nil {
+		dvd := &DVD{}
+		if err := json.Unmarshal(r.Info, dvd); err != nil {
 			return err
 		}
 		r.Asset = dvd
 	case AssetCategoryCD:
-		var cd CD
-		if err := json.Unmarshal(r.Info, &cd); err != nil {
+		cd := &CD{}
+		if err := json.Unmarshal(r.Info, cd); err != nil {
 			return err
 		}
 		r.Asset = cd
 	case AssetCategoryVideoGame:
-		var game VideoGame
-		if err := json.Unmarshal(r.Info, &game); err != nil {
+		game := &VideoGame{}
+		if err := json.Unmarshal(r.Info, game); err != nil {
 			return err
 		}
 		r.Asset = game

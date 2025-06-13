@@ -33,7 +33,7 @@ func (cr *catalogRepository) CreateAsset(asset *catalog.Asset) error {
 	}
 
 	_, err = cr.db.Exec(
-		"INSERT INTO assets (id, category, created_at, updated_at, info) VALUES ($1, $2, $3, $4)",
+		"INSERT INTO assets (id, category, created_at, updated_at, info) VALUES ($1, $2, $3, $4, $5)",
 		asset.ID.String(),
 		asset.Category,
 		asset.CreatedAt,

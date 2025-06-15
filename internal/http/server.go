@@ -18,14 +18,15 @@ type Server struct {
 	srv                   *http.Server
 	stopOngoingGracefully context.CancelFunc
 
-	authController    *AuthController
-	catalogController *CatalogController
+	authController     *AuthController
+	catalogController  *CatalogController
+	customerController *CustomerController
 }
 
 // NewServer builds a new http.Server using the provided dependencies.
 // All the dependencies provided are mandatory, if we miss some of them an error
 // will be returned.
-func NewServer(address string, authController *AuthController, catalogController *CatalogController) (*Server, error) {
+func NewServer(address string, authController *AuthController, catalogController *CatalogController, customerController *CustomerController) (*Server, error) {
 	if address == "" {
 		return nil, errors.New("http server address is mandatory")
 	}
@@ -35,11 +36,15 @@ func NewServer(address string, authController *AuthController, catalogController
 	if catalogController == nil {
 		return nil, errors.New("catalog controller is mandatory")
 	}
+	if customerController == nil {
+		return nil, errors.New("customer controller is mandatory")
+	}
 
 	return &Server{
-		address:           address,
-		authController:    authController,
-		catalogController: catalogController,
+		address:            address,
+		authController:     authController,
+		catalogController:  catalogController,
+		customerController: customerController,
 	}, nil
 }
 

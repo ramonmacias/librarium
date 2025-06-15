@@ -18,6 +18,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// CustomerStatus defines the different customer statuses
+type CustomerStatus string
+
+const (
+	// CustomerStatusActive determines when the customer is active, this means is allowed
+	// to perform all the available actions for customers.
+	CustomerStatusActive CustomerStatus = "ACTIVE"
+	// CustomerStatusSuspended determines when the customer is suspended, this means is blocked
+	// from performing any previous available action for the customer.
+	CustomerStatusSuspended CustomerStatus = "SUSPENDED"
+)
+
 // Customer is the person who wants to benefit from the Library by
 // being able to read physically in there or rent any of the
 // Library catalog items available.
@@ -25,8 +37,29 @@ type Customer struct {
 	ID             uuid.UUID       // Unique identifier
 	Name           string          // Name of the customer
 	LastName       string          // LastName of the customer
+	Status         CustomerStatus  // Determines if the customer is active or suspended
 	NationalID     string          // National identificator, for example DNI in Spain
 	ContactDetails *ContactDetails // Contact details for the customer
+}
+
+// Suspend performs the action on changing the status of the customer from active to suspended
+func (c *Customer) Suspend() error {
+	if c.Status == CustomerStatusSuspended {
+		return errors.New("customer already suspended")
+	}
+
+	c.Status = CustomerStatusSuspended
+	return nil
+}
+
+// Unsuspend performs the action on changing the status of the customer from the suspended to active
+func (c *Customer) Unsuspend() error {
+	if c.Status != CustomerStatusSuspended {
+		return errors.New("customer should be suspended to be unsuspend")
+	}
+
+	c.Status = CustomerStatusActive
+	return nil
 }
 
 // BuildCustomer generates a new Customer using the given data.
@@ -147,8 +180,19 @@ type Repository interface {
 	// CreateCustomer inserts the provided customer into the system.
 	// It returns an error in case of failure
 	CreateCustomer(customer *Customer) error
+	// UpdateCustomer sets the provided customer data as updated data for the provided customer.
+	// It returns an error in case of failure.
+	UpdateCustomer(customer *Customer) error
 	// GetLibrarianByEmail retrieves the librarian linked to the provided email.
-	// It return nil, nil in case we can't find the librarian.
+	// It returns nil, nil in case we can't find the librarian.
 	// It returns an error in case of failure.
 	GetLibrarianByEmail(email string) (*Librarian, error)
+	// GetCustomer retrieves the customer linked to the provided customer.
+	// It returns nil, nil in case the customer is not found.
+	// It returns an error in case of failure.
+	GetCustomer(id uuid.UUID) (*Customer, error)
+	// FindCustomers retrieves all the customers from the system.
+	// It returns an empty slice and no error in case of not found.
+	// It returns an error in case of failure.
+	FindCustomers() ([]*Customer, error)
 }

@@ -77,3 +77,10 @@ func (us *userRepository) GetLibrarianByEmail(email string) (*user.Librarian, er
 
 	return librarian, nil
 }
+
+// FindCustomers retrieves all the customers from the system.
+// It returns an empty slice and no error in case of not found.
+// It returns an error in case of failure.
+func (us *userRepository) FindCustomers() ([]*user.Customer, error) {
+	return nil, nil
+}

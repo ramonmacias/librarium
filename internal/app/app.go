@@ -37,8 +37,9 @@ type Application struct {
 	catalogRepo catalog.Repository
 
 	// Controllers
-	authController    *http.AuthController
-	catalogController *http.CatalogController
+	authController     *http.AuthController
+	catalogController  *http.CatalogController
+	customerController *http.CustomerController
 }
 
 // NewLibrariumApplication builds a new librarium application using the provided

@@ -112,3 +112,44 @@ func (cc *CustomerController) SuspendCustomer(w http.ResponseWriter, r *http.Req
 
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (cc *CustomerController) UnSuspendCustomer(w http.ResponseWriter, r *http.Request) {
+	path := strings.Trim(r.URL.Path, "/")
+	parts := strings.Split(path, "/")
+
+	if len(parts) != 3 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalida expected path")
+		return
+	}
+	customerID, err := uuid.Parse(parts[1])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid customer ID format, expected UUID")
+		return
+	}
+
+	customer, err := cc.userRepository.GetCustomer(customerID)
+	if err != nil {
+		log.Println("error getting customer", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error getting customer")
+		return
+	}
+
+	if err := customer.Suspend(); err != nil {
+		log.Println("error unsuspending customer", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error unsuspending customer")
+		return
+	}
+
+	if err := cc.userRepository.UpdateCustomer(customer); err != nil {
+		log.Println("error updating customer", err)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("error updating customer")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

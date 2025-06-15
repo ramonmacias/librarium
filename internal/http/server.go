@@ -86,18 +86,10 @@ func (s *Server) router() *http.ServeMux {
 	mux.HandleFunc("POST /catalog/assets", s.catalogController.CreateCatalogAsset)
 	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.DeleteCatalogAsset)
 	mux.HandleFunc("GET /catalog/assets", s.catalogController.FindCatalogAssets)
-	mux.HandleFunc("GET /customers", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("POST /customers", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("PUT /customers/{id}/suspend", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("PUT /customers/{id}/unsuspend", func(w http.ResponseWriter, r *http.Request) {
-
-	})
+	mux.HandleFunc("GET /customers", s.customerController.FindCustomers)
+	mux.HandleFunc("POST /customers", s.customerController.CreateCustomer)
+	mux.HandleFunc("PUT /customers/{id}/suspend", s.customerController.SuspendCustomer)
+	mux.HandleFunc("PUT /customers/{id}/unsuspend", s.customerController.UnSuspendCustomer)
 	mux.HandleFunc("GET /rentals", func(w http.ResponseWriter, r *http.Request) {
 
 	})

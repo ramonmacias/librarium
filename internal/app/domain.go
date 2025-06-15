@@ -23,5 +23,9 @@ func (a *Application) setupDomain() (err error) {
 	if err != nil {
 		return err
 	}
+	a.customerController, err = http.NewCustomerController(a.userRepo)
+	if err != nil {
+		return err
+	}
 	return nil
 }

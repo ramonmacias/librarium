@@ -43,6 +43,12 @@ const (
 	RentalStatusOverdue RentalStatus = "OVERDUE"
 )
 
+// RentalRequest
+type RentalRequest struct {
+	CustomerID uuid.UUID `json:"customer_id"` // Unique customer identifier
+	AssetID    uuid.UUID `json:"asset_id"`    // Unique asset identifier
+}
+
 // Rental defines the concept of renting an asset catalog, this is the relationship
 // between a customer and an asset withing a period of time
 type Rental struct {
@@ -72,7 +78,9 @@ func Rent(customer *user.Customer, asset *catalog.Asset, activeRental *Rental, c
 			return nil, errors.New("the customer has already a rental in overdue")
 		}
 	}
-	// TODO: Check on if the customer is not already banned
+	if customer.Status == user.CustomerStatusSuspended {
+		return nil, errors.New("cannot rent the asset, customer is suspended")
+	}
 
 	return &Rental{
 		ID:         uuid.New(),
@@ -132,4 +140,9 @@ type Repository interface {
 	// It returns an empty slice and no error in case no rentals found.
 	// It returns an error if something fails.
 	FindRentals() ([]*Rental, error)
+	// GetActiveRental retrieves the rental that matches the provided customer and asset IDs and
+	// is in an Active status.
+	// It returns nil, nil in case of not found.
+	// It returns an error if something fails.
+	GetActiveRental(customerID, assetID uuid.UUID) (*Rental, error)
 }

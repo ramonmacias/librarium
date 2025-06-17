@@ -83,13 +83,16 @@ func (s *Server) router() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
+
 	mux.HandleFunc("POST /catalog/assets", s.catalogController.CreateCatalogAsset)
 	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.DeleteCatalogAsset)
 	mux.HandleFunc("GET /catalog/assets", s.catalogController.FindCatalogAssets)
+
 	mux.HandleFunc("GET /customers", s.customerController.FindCustomers)
 	mux.HandleFunc("POST /customers", s.customerController.CreateCustomer)
 	mux.HandleFunc("PUT /customers/{id}/suspend", s.customerController.SuspendCustomer)
 	mux.HandleFunc("PUT /customers/{id}/unsuspend", s.customerController.UnSuspendCustomer)
+
 	mux.HandleFunc("GET /rentals", func(w http.ResponseWriter, r *http.Request) {
 
 	})

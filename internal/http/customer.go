@@ -137,7 +137,7 @@ func (cc *CustomerController) UnSuspendCustomer(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := customer.Suspend(); err != nil {
+	if err := customer.Unsuspend(); err != nil {
 		log.Println("error unsuspending customer", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode("error unsuspending customer")

@@ -44,7 +44,7 @@ func (us *userRepository) CreateLibrarian(librarian *user.Librarian) error {
 // It returns an error in case of failure.
 func (us *userRepository) CreateCustomer(customer *user.Customer) error {
 	_, err := us.db.Exec(
-		"INSERT INTO customers (id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+		"INSERT INTO customers (id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
 		customer.ID.String(),
 		customer.Name,
 		customer.LastName,
@@ -93,7 +93,7 @@ func (us *userRepository) FindCustomers() ([]*user.Customer, error) {
 
 	customers := []*user.Customer{}
 	for rows.Next() {
-		customer := &user.Customer{}
+		customer := &user.Customer{ContactDetails: &user.ContactDetails{Address: &user.Address{}}}
 
 		if err := rows.Scan(&customer.ID, &customer.Name, &customer.LastName, &customer.NationalID, &customer.ContactDetails.Email, &customer.ContactDetails.PhoneNumber,
 			&customer.ContactDetails.Address.Street, &customer.ContactDetails.Address.City, &customer.ContactDetails.Address.State, &customer.ContactDetails.Address.PostalCode,
@@ -113,9 +113,9 @@ func (us *userRepository) FindCustomers() ([]*user.Customer, error) {
 // It returns nil, nil in case the customer is not found.
 // It returns an error in case of failure.
 func (us *userRepository) GetCustomer(id uuid.UUID) (*user.Customer, error) {
-	customer := &user.Customer{}
+	customer := &user.Customer{ContactDetails: &user.ContactDetails{Address: &user.Address{}}}
 	err := us.db.QueryRow(
-		"SELECT id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status WHERE id = $1", id.String(),
+		"SELECT id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status FROM customers WHERE id = $1", id.String(),
 	).Scan(
 		&customer.ID, &customer.Name, &customer.LastName, &customer.NationalID, &customer.ContactDetails.Email, &customer.ContactDetails.PhoneNumber,
 		&customer.ContactDetails.Address.Street, &customer.ContactDetails.Address.City, &customer.ContactDetails.Address.State, &customer.ContactDetails.Address.PostalCode,
@@ -151,6 +151,7 @@ func (us *userRepository) UpdateCustomer(customer *user.Customer) error {
 		WHERE id = $12;
 	`, customer.Name, customer.LastName, customer.NationalID, customer.ContactDetails.Email, customer.ContactDetails.PhoneNumber, customer.ContactDetails.Address.Street,
 		customer.ContactDetails.Address.City, customer.ContactDetails.Address.State, customer.ContactDetails.Address.PostalCode, customer.ContactDetails.Address.Country, customer.Status,
+		customer.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("error updating customer %w", err)

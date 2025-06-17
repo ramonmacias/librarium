@@ -44,16 +44,16 @@ func Librarian(req *LibrarianRequest) (*user.Librarian, error) {
 // CustomerRequest defines the needed data at the moment we want to
 // onboard a new customer into the system.
 type CustomerRequest struct {
-	Name        string // Name of the customer
-	LastName    string // LastName of the customer
-	NationalID  string // National identificator, for example DNI in Spain
-	Email       string // Email address
-	PhoneNumber string // Phone number (can include country code)
-	Street      string // Street name and number
-	City        string // City name
-	State       string // State or province
-	PostalCode  string // Postal or ZIP code
-	Country     string // Country name
+	Name        string `json:"name"`         // Name of the customer
+	LastName    string `json:"last_name"`    // LastName of the customer
+	NationalID  string `json:"national_id"`  // National identificator, for example DNI in Spain
+	Email       string `json:"email"`        // Email address
+	PhoneNumber string `json:"phone_number"` // Phone number (can include country code)
+	Street      string `json:"street"`       // Street name and number
+	City        string `json:"city"`         // City name
+	State       string `json:"state"`        // State or province
+	PostalCode  string `json:"postal_code"`  // Postal or ZIP code
+	Country     string `json:"country"`      // Country name
 }
 
 // Customer function receives an onboarding.CustomerRequest, this is used to call the builder

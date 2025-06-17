@@ -34,12 +34,12 @@ const (
 // being able to read physically in there or rent any of the
 // Library catalog items available.
 type Customer struct {
-	ID             uuid.UUID       // Unique identifier
-	Name           string          // Name of the customer
-	LastName       string          // LastName of the customer
-	Status         CustomerStatus  // Determines if the customer is active or suspended
-	NationalID     string          // National identificator, for example DNI in Spain
-	ContactDetails *ContactDetails // Contact details for the customer
+	ID             uuid.UUID       `json:"id"`              // Unique identifier
+	Name           string          `json:"name"`            // Name of the customer
+	LastName       string          `json:"last_name"`       // LastName of the customer
+	Status         CustomerStatus  `json:"status"`          // Determines if the customer is active or suspended
+	NationalID     string          `json:"national_id"`     // National identificator, for example DNI in Spain
+	ContactDetails *ContactDetails `json:"contact_details"` // Contact details for the customer
 }
 
 // Suspend performs the action on changing the status of the customer from active to suspended
@@ -87,6 +87,7 @@ func BuildCustomer(name, lastName, nationalID string, contactDetails *ContactDet
 		LastName:       lastName,
 		NationalID:     nationalID,
 		ContactDetails: contactDetails,
+		Status:         CustomerStatusActive,
 	}, nil
 }
 
@@ -123,11 +124,11 @@ func BuildLibrarian(name, email, password string) (*Librarian, error) {
 
 // Address holds the physical address information.
 type Address struct {
-	Street     string // Street name and number
-	City       string // City name
-	State      string // State or province
-	PostalCode string // Postal or ZIP code
-	Country    string // Country name
+	Street     string `json:"street"`      // Street name and number
+	City       string `json:"city"`        // City name
+	State      string `json:"state"`       // State or province
+	PostalCode string `json:"postal_code"` // Postal or ZIP code
+	Country    string `json:"country"`     // Country name
 }
 
 func (a *Address) validate() error {
@@ -151,9 +152,9 @@ func (a *Address) validate() error {
 
 // ContactDetails holds different ways to contact a person.
 type ContactDetails struct {
-	Email       string   // Email address
-	PhoneNumber string   // Phone number (can include country code)
-	Address     *Address // Physical address
+	Email       string   `json:"email"`        // Email address
+	PhoneNumber string   `json:"phone_number"` // Phone number (can include country code)
+	Address     *Address `json:"address"`      // Physical address
 }
 
 func (cd *ContactDetails) validate() error {

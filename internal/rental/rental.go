@@ -119,12 +119,12 @@ func Extend(r *Rental) (*Rental, error) {
 		return nil, errors.New("the rental is already returned")
 	}
 
-	if r.RentedAt.Month()+1 > maxNumberOfExtendedMonths {
+	if r.DueAt.AddDate(0, 1, 0).After(r.RentedAt.AddDate(0, maxNumberOfExtendedMonths, 0)) {
 		return nil, errors.New("extend max months reached")
 	}
 
 	r.Status = RentalStatusActive
-	r.DueAt = r.RentedAt.AddDate(0, 1, 0)
+	r.DueAt = r.DueAt.AddDate(0, 1, 0)
 	return r, nil
 }
 

@@ -30,7 +30,7 @@ func NewCustomerController(userRepository user.Repository) (*CustomerController,
 	return &CustomerController{userRepository}, nil
 }
 
-func (cc *CustomerController) CreateCustomer(w http.ResponseWriter, r *http.Request) {
+func (cc *CustomerController) Create(w http.ResponseWriter, r *http.Request) {
 	customerReq := &onboarding.CustomerRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(customerReq); err != nil {
@@ -59,7 +59,7 @@ func (cc *CustomerController) CreateCustomer(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(struct{ ID string }{ID: customer.ID.String()})
 }
 
-func (cc *CustomerController) FindCustomers(w http.ResponseWriter, r *http.Request) {
+func (cc *CustomerController) Find(w http.ResponseWriter, r *http.Request) {
 	customers, err := cc.userRepository.FindCustomers()
 	if err != nil {
 		log.Println("error finding customers", err)
@@ -72,7 +72,7 @@ func (cc *CustomerController) FindCustomers(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(customers)
 }
 
-func (cc *CustomerController) SuspendCustomer(w http.ResponseWriter, r *http.Request) {
+func (cc *CustomerController) Suspend(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(r.URL.Path, "/")
 	parts := strings.Split(path, "/")
 
@@ -113,7 +113,7 @@ func (cc *CustomerController) SuspendCustomer(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (cc *CustomerController) UnSuspendCustomer(w http.ResponseWriter, r *http.Request) {
+func (cc *CustomerController) UnSuspend(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(r.URL.Path, "/")
 	parts := strings.Split(path, "/")
 

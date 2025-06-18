@@ -77,7 +77,7 @@ func (rr *rentalRepository) FindRentals() ([]*rental.Rental, error) {
 	for rows.Next() {
 		rental := &rental.Rental{}
 
-		if err := rows.Scan(rental.ID, rental.CustomerID, rental.AssetID, rental.RentedAt, rental.DueAt, rental.ReturnedAt, rental.Status); err != nil {
+		if err := rows.Scan(&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.ReturnedAt, &rental.Status); err != nil {
 			return nil, fmt.Errorf("error scanning while finding rentals %w", err)
 		}
 
@@ -98,7 +98,7 @@ func (rr *rentalRepository) GetActiveRental(customerID, assetID uuid.UUID) (*ren
 	err := rr.db.QueryRow(
 		"SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals WHERE customer_id = $1 AND asset_id = $2 AND status = 'ACTIVE'", customerID, assetID,
 	).Scan(
-		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.Status,
+		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.ReturnedAt, &rental.Status,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -118,7 +118,7 @@ func (rr *rentalRepository) GetRental(id uuid.UUID) (*rental.Rental, error) {
 	err := rr.db.QueryRow(
 		"SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals WHERE id = $1", id,
 	).Scan(
-		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.Status,
+		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.ReturnedAt, &rental.Status,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

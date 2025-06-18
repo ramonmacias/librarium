@@ -89,15 +89,14 @@ func (s *Server) router() *http.ServeMux {
 	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
 
-	mux.HandleFunc("POST /catalog/assets", s.catalogController.CreateCatalogAsset)
-	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.DeleteCatalogAsset)
-	mux.HandleFunc("GET /catalog/assets", s.catalogController.FindCatalogAssets)
+	mux.HandleFunc("POST /catalog/assets", s.catalogController.Create)
+	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.Delete)
+	mux.HandleFunc("GET /catalog/assets", s.catalogController.Find)
 
-	// TODO: Refactor controller name methods to avoid redundancy
-	mux.HandleFunc("GET /customers", s.customerController.FindCustomers)
-	mux.HandleFunc("POST /customers", s.customerController.CreateCustomer)
-	mux.HandleFunc("PUT /customers/{id}/suspend", s.customerController.SuspendCustomer)
-	mux.HandleFunc("PUT /customers/{id}/unsuspend", s.customerController.UnSuspendCustomer)
+	mux.HandleFunc("GET /customers", s.customerController.Find)
+	mux.HandleFunc("POST /customers", s.customerController.Create)
+	mux.HandleFunc("PUT /customers/{id}/suspend", s.customerController.Suspend)
+	mux.HandleFunc("PUT /customers/{id}/unsuspend", s.customerController.UnSuspend)
 
 	mux.HandleFunc("GET /rentals", s.rentalController.Find)
 	mux.HandleFunc("POST /rentals", s.rentalController.Create)

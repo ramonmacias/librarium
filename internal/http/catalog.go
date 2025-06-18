@@ -29,7 +29,7 @@ func NewCatalogController(catalogRepository catalog.Repository) (*CatalogControl
 	return &CatalogController{catalogRepository}, nil
 }
 
-func (cc *CatalogController) CreateCatalogAsset(w http.ResponseWriter, r *http.Request) {
+func (cc *CatalogController) Create(w http.ResponseWriter, r *http.Request) {
 	createAssetReq := &catalog.CreateAssetRequest{}
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(createAssetReq); err != nil {
@@ -58,7 +58,7 @@ func (cc *CatalogController) CreateCatalogAsset(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(struct{ ID string }{ID: asset.ID.String()})
 }
 
-func (cc *CatalogController) DeleteCatalogAsset(w http.ResponseWriter, r *http.Request) {
+func (cc *CatalogController) Delete(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	parts := strings.Split(strings.Trim(path, "/"), "/")
 	if len(parts) != 3 {
@@ -91,7 +91,7 @@ func (cc *CatalogController) DeleteCatalogAsset(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (cc *CatalogController) FindCatalogAssets(w http.ResponseWriter, r *http.Request) {
+func (cc *CatalogController) Find(w http.ResponseWriter, r *http.Request) {
 	assets, err := cc.catalogRepository.FindAssets()
 	if err != nil {
 		log.Println("error finding catalog assets", err)

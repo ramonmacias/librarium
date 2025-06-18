@@ -106,13 +106,17 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 
 func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) == 4 {
-		log.Println("mallformed return asset endpoint")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("mallformed return asset endpoint")
+	if len(parts) != 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalida expected path")
 		return
 	}
-	rentalID := uuid.MustParse(parts[2])
+	rentalID, err := uuid.Parse(parts[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid rental ID format, expected UUID")
+		return
+	}
 
 	ren, err := rc.rentalRepository.GetRental(rentalID)
 	if err != nil {
@@ -142,13 +146,17 @@ func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
 
 func (rc *RentalController) Extend(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) == 4 {
-		log.Println("mallformed extend asset endpoint")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("mallformed extend asset endpoint")
+	if len(parts) != 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid expected path")
 		return
 	}
-	rentalID := uuid.MustParse(parts[2])
+	rentalID, err := uuid.Parse(parts[2])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode("invalid rental ID format, expected UUID")
+		return
+	}
 
 	ren, err := rc.rentalRepository.GetRental(rentalID)
 	if err != nil {

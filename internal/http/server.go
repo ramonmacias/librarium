@@ -21,12 +21,13 @@ type Server struct {
 	authController     *AuthController
 	catalogController  *CatalogController
 	customerController *CustomerController
+	rentalController   *RentalController
 }
 
 // NewServer builds a new http.Server using the provided dependencies.
 // All the dependencies provided are mandatory, if we miss some of them an error
 // will be returned.
-func NewServer(address string, authController *AuthController, catalogController *CatalogController, customerController *CustomerController) (*Server, error) {
+func NewServer(address string, authController *AuthController, catalogController *CatalogController, customerController *CustomerController, rentalController *RentalController) (*Server, error) {
 	if address == "" {
 		return nil, errors.New("http server address is mandatory")
 	}
@@ -39,12 +40,16 @@ func NewServer(address string, authController *AuthController, catalogController
 	if customerController == nil {
 		return nil, errors.New("customer controller is mandatory")
 	}
+	if rentalController == nil {
+		return nil, errors.New("rental controller is mandatory")
+	}
 
 	return &Server{
 		address:            address,
 		authController:     authController,
 		catalogController:  catalogController,
 		customerController: customerController,
+		rentalController:   rentalController,
 	}, nil
 }
 
@@ -88,23 +93,15 @@ func (s *Server) router() *http.ServeMux {
 	mux.HandleFunc("DELETE /catalog/assets/{id}", s.catalogController.DeleteCatalogAsset)
 	mux.HandleFunc("GET /catalog/assets", s.catalogController.FindCatalogAssets)
 
+	// TODO: Refactor controller name methods to avoid redundancy
 	mux.HandleFunc("GET /customers", s.customerController.FindCustomers)
 	mux.HandleFunc("POST /customers", s.customerController.CreateCustomer)
 	mux.HandleFunc("PUT /customers/{id}/suspend", s.customerController.SuspendCustomer)
 	mux.HandleFunc("PUT /customers/{id}/unsuspend", s.customerController.UnSuspendCustomer)
 
-	mux.HandleFunc("GET /rentals", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("POST /rentals", func(w http.ResponseWriter, r *http.Request) {
-
-	})
-	mux.HandleFunc("PUT /rentals/{id}/return", func(w http.ResponseWriter, r *http.Request) {
-		id := r.URL.Path[len("/foo/"):]
-		log.Println("ID is:", id)
-	})
-	mux.HandleFunc("PUT /rentals/{id}/extend", func(w http.ResponseWriter, r *http.Request) {
-
-	})
+	mux.HandleFunc("GET /rentals", s.rentalController.Find)
+	mux.HandleFunc("POST /rentals", s.rentalController.Create)
+	mux.HandleFunc("PUT /rentals/{id}/return", s.rentalController.Return)
+	mux.HandleFunc("PUT /rentals/{id}/extend", s.rentalController.Extend)
 	return mux
 }

@@ -13,6 +13,7 @@ import (
 	"librarium/internal/catalog"
 	"librarium/internal/http"
 	"librarium/internal/postgres"
+	"librarium/internal/rental"
 	"librarium/internal/user"
 )
 
@@ -35,11 +36,13 @@ type Application struct {
 	// Repositories
 	userRepo    user.Repository
 	catalogRepo catalog.Repository
+	rentalRepo  rental.Repository
 
 	// Controllers
 	authController     *http.AuthController
 	catalogController  *http.CatalogController
 	customerController *http.CustomerController
+	rentalController   *http.RentalController
 }
 
 // NewLibrariumApplication builds a new librarium application using the provided

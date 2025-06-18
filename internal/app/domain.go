@@ -14,6 +14,10 @@ func (a *Application) setupDomain() (err error) {
 	if err != nil {
 		return err
 	}
+	a.rentalRepo, err = postgres.NewRentalRepository(a.db)
+	if err != nil {
+		return err
+	}
 
 	a.authController, err = http.NewAuthController(a.userRepo)
 	if err != nil {
@@ -24,6 +28,10 @@ func (a *Application) setupDomain() (err error) {
 		return err
 	}
 	a.customerController, err = http.NewCustomerController(a.userRepo)
+	if err != nil {
+		return err
+	}
+	a.rentalController, err = http.NewRentalController(a.rentalRepo, a.userRepo, a.catalogRepo)
 	if err != nil {
 		return err
 	}

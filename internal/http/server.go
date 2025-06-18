@@ -84,7 +84,7 @@ func (s *Server) Shutdown() error {
 
 // router defines all the routing to our API, currently we only allow the librarian
 // to access to it, so all the action will be taken by him.
-func (s *Server) router() *http.ServeMux {
+func (s *Server) router() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /signup", s.authController.Signup)
 	mux.HandleFunc("POST /login", s.authController.Login)
@@ -102,5 +102,6 @@ func (s *Server) router() *http.ServeMux {
 	mux.HandleFunc("POST /rentals", s.rentalController.Create)
 	mux.HandleFunc("PUT /rentals/{id}/return", s.rentalController.Return)
 	mux.HandleFunc("PUT /rentals/{id}/extend", s.rentalController.Extend)
-	return mux
+
+	return withMiddlewares(mux, jsonContentTypeMiddleware, authMiddleware)
 }

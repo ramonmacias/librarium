@@ -52,13 +52,13 @@ type RentalRequest struct {
 // Rental defines the concept of renting an asset catalog, this is the relationship
 // between a customer and an asset withing a period of time
 type Rental struct {
-	ID         uuid.UUID    // Unique rental ID
-	CustomerID uuid.UUID    // Reference to the customer who rented the asset
-	AssetID    uuid.UUID    // Reference to the catalog asset being rented
-	RentedAt   time.Time    // Timestamp when the rental started
-	DueAt      time.Time    // When the asset is due for return
-	ReturnedAt *time.Time   // When the asset was actually returned (nil if not returned yet)
-	Status     RentalStatus // Enum: Active, Returned, Overdue, etc.
+	ID         uuid.UUID    `json:"id"`          // Unique rental ID
+	CustomerID uuid.UUID    `json:"customer_id"` // Reference to the customer who rented the asset
+	AssetID    uuid.UUID    `json:"asset_id"`    // Reference to the catalog asset being rented
+	RentedAt   time.Time    `json:"rented_at"`   // Timestamp when the rental started
+	DueAt      time.Time    `json:"due_at"`      // When the asset is due for return
+	ReturnedAt *time.Time   `json:"returned_at"` // When the asset was actually returned (nil if not returned yet)
+	Status     RentalStatus `json:"status"`      // Enum: Active, Returned, Overdue, etc.
 }
 
 // Rent creates a new rental between the customer and the asset given.

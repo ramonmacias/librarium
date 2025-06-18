@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"librarium/internal/catalog"
 	"librarium/internal/rental"
 	"librarium/internal/user"
-
-	"github.com/google/uuid"
 )
 
 // RentalController holds all the dependencies needed to
@@ -48,7 +48,7 @@ func (rc *RentalController) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(rentals)
 }
 

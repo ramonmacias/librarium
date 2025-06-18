@@ -84,8 +84,8 @@ func DecodeAndValidate(tokenStr string) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("error parsing token %w", err)
 	}
 
-	if claims, ok := token.Claims.(jwt.RegisteredClaims); ok {
-		return uuid.MustParse(claims.Subject), nil
+	if subject, err := token.Claims.GetSubject(); err == nil {
+		return uuid.MustParse(subject), nil
 	}
 	return uuid.Nil, errors.New("error while parsing jwt registered claims")
 }

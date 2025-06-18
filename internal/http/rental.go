@@ -5,10 +5,13 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 
 	"librarium/internal/catalog"
 	"librarium/internal/rental"
 	"librarium/internal/user"
+
+	"github.com/google/uuid"
 )
 
 // RentalController holds all the dependencies needed to
@@ -102,9 +105,73 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) == 4 {
+		log.Println("mallformed return asset endpoint")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("mallformed return asset endpoint")
+		return
+	}
+	rentalID := uuid.MustParse(parts[2])
 
+	ren, err := rc.rentalRepository.GetRental(rentalID)
+	if err != nil {
+		log.Println("error getting rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error getting rental")
+		return
+	}
+
+	returnedRental, err := rental.Return(ren)
+	if err != nil {
+		log.Println("error returning rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error returning rental")
+		return
+	}
+
+	if err := rc.rentalRepository.UpdateRental(returnedRental); err != nil {
+		log.Println("error updating rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error updating rental")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (rc *RentalController) Extend(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	if len(parts) == 4 {
+		log.Println("mallformed extend asset endpoint")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("mallformed extend asset endpoint")
+		return
+	}
+	rentalID := uuid.MustParse(parts[2])
 
+	ren, err := rc.rentalRepository.GetRental(rentalID)
+	if err != nil {
+		log.Println("error getting rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error getting rental")
+		return
+	}
+
+	extendedRental, err := rental.Extend(ren)
+	if err != nil {
+		log.Println("error extending rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error extending rental")
+		return
+	}
+
+	if err := rc.rentalRepository.UpdateRental(extendedRental); err != nil {
+		log.Println("error updating rental", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode("error updating rental")
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

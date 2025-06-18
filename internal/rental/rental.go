@@ -145,4 +145,8 @@ type Repository interface {
 	// It returns nil, nil in case of not found.
 	// It returns an error if something fails.
 	GetActiveRental(customerID, assetID uuid.UUID) (*Rental, error)
+	// GetRental retrieves the rental linked to the provided ID.
+	// It returns nil, nil in case not found.
+	// It returns an error if something fails.
+	GetRental(id uuid.UUID) (*Rental, error)
 }

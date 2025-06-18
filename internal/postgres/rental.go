@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"librarium/internal/rental"
+
+	"github.com/google/uuid"
 )
 
 type rentalRepository struct {
@@ -85,4 +87,45 @@ func (rr *rentalRepository) FindRentals() ([]*rental.Rental, error) {
 		return nil, fmt.Errorf("error while going through the rentals rows %w", err)
 	}
 	return rentals, nil
+}
+
+// GetActiveRental retrieves the rental that matches the provided customer and asset IDs and
+// is in an Active status.
+// It returns nil, nil in case of not found.
+// It returns an error if something fails.
+func (rr *rentalRepository) GetActiveRental(customerID, assetID uuid.UUID) (*rental.Rental, error) {
+	rental := &rental.Rental{}
+	err := rr.db.QueryRow(
+		"SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals WHERE customer_id = $1 AND asset_id = $2 AND status = 'ACTIVE'", customerID, assetID,
+	).Scan(
+		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.Status,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error getting active rental, with customer id %s and asset id %s err %w", customerID, assetID, err)
+	}
+
+	return rental, nil
+}
+
+// GetRental retrieves the rental linked to the provided ID.
+// It returns nil, nil in case not found.
+// It returns an error if something fails.
+func (rr *rentalRepository) GetRental(id uuid.UUID) (*rental.Rental, error) {
+	rental := &rental.Rental{}
+	err := rr.db.QueryRow(
+		"SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals WHERE id = $1", id,
+	).Scan(
+		&rental.ID, &rental.CustomerID, &rental.AssetID, &rental.RentedAt, &rental.DueAt, &rental.Status,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error getting rental, with id %s err %w", id, err)
+	}
+
+	return rental, nil
 }

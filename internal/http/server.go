@@ -103,5 +103,5 @@ func (s *Server) router() http.Handler {
 	mux.HandleFunc("PUT /rentals/{id}/return", s.rentalController.Return)
 	mux.HandleFunc("PUT /rentals/{id}/extend", s.rentalController.Extend)
 
-	return withMiddlewares(mux, jsonContentTypeMiddleware, authMiddleware)
+	return withMiddlewares(mux, JsonContentTypeMiddleware, AuthMiddleware)
 }

@@ -48,8 +48,7 @@ func (rc *RentalController) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(rentals)
+	WriteResponse(w, http.StatusOK, rentals)
 }
 
 func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {

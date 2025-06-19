@@ -56,7 +56,9 @@ func (cc *CustomerController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(struct{ ID string }{ID: customer.ID.String()})
+	json.NewEncoder(w).Encode(struct {
+		ID string `json:"id"`
+	}{ID: customer.ID.String()})
 }
 
 func (cc *CustomerController) Find(w http.ResponseWriter, r *http.Request) {
@@ -68,8 +70,7 @@ func (cc *CustomerController) Find(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(customers)
+	WriteResponse(w, http.StatusOK, customers)
 }
 
 func (cc *CustomerController) Suspend(w http.ResponseWriter, r *http.Request) {

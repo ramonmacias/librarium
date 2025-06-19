@@ -106,3 +106,28 @@ func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(struct{ ID string }{ID: librarian.ID.String()})
 }
+
+// AuthMiddleware checks that we provide an Authorization header with a valid token.
+// It returns specific errors in case of non passing the auth checks.
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/signup" || r.URL.Path == "/login" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		token := r.Header.Get("Authorization")
+		if token == "" {
+			WriteResponse(w, http.StatusUnauthorized, errors.New("unauthorized"))
+			return
+		}
+
+		_, err := auth.DecodeAndValidate(token)
+		if err != nil {
+			WriteResponse(w, http.StatusUnauthorized, errors.New("unauthorized"))
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}

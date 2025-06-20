@@ -43,8 +43,7 @@ func (rc *RentalController) Find(w http.ResponseWriter, r *http.Request) {
 	rentals, err := rc.rentalRepository.FindRentals()
 	if err != nil {
 		log.Println("error finding rentals", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error finding rentals")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error finding rentals"))
 		return
 	}
 
@@ -56,30 +55,26 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(rentalReq); err != nil {
 		log.Println("error decoding rental request", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error decoding rental request")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding rental request"))
 		return
 	}
 
 	customer, err := rc.userRepository.GetCustomer(rentalReq.CustomerID)
 	if err != nil {
 		log.Println("error getting customer", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error getting customer")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting customer"))
 		return
 	}
 	asset, err := rc.catalogRepository.GetAsset(rentalReq.AssetID)
 	if err != nil {
 		log.Println("error getting asset", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error getting asset")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting asset"))
 		return
 	}
 	activeRental, err := rc.rentalRepository.GetActiveRental(customer.ID, asset.ID)
 	if err != nil {
 		log.Println("error getting active rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error getting active rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting active rental"))
 		return
 	}
 
@@ -87,56 +82,50 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 	ren, err := rental.Rent(customer, asset, activeRental, nil)
 	if err != nil {
 		log.Println("error renting asset", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error renting asset")
+		WriteResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := rc.rentalRepository.CreateRental(ren); err != nil {
 		log.Println("error creating rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error creating rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error creating rental"))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(struct{ ID string }{ID: ren.ID.String()})
+	WriteResponse(w, http.StatusOK, struct {
+		ID string `json:"id"`
+	}{ID: ren.ID.String()})
 }
 
 func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalida expected path")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid expected path"))
 		return
 	}
 	rentalID, err := uuid.Parse(parts[2])
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid rental ID format, expected UUID")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid rental ID format, expected UUID"))
 		return
 	}
 
 	ren, err := rc.rentalRepository.GetRental(rentalID)
 	if err != nil {
 		log.Println("error getting rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error getting rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting rental"))
 		return
 	}
 
 	returnedRental, err := rental.Return(ren)
 	if err != nil {
 		log.Println("error returning rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error returning rental")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error returning rental"))
 		return
 	}
 
 	if err := rc.rentalRepository.UpdateRental(returnedRental); err != nil {
 		log.Println("error updating rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error updating rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error updating rental"))
 		return
 	}
 
@@ -146,37 +135,32 @@ func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
 func (rc *RentalController) Extend(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 4 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid expected path")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid expected path"))
 		return
 	}
 	rentalID, err := uuid.Parse(parts[2])
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid rental ID format, expected UUID")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid rental ID format, expected UUID"))
 		return
 	}
 
 	ren, err := rc.rentalRepository.GetRental(rentalID)
 	if err != nil {
 		log.Println("error getting rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error getting rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting rental"))
 		return
 	}
 
 	extendedRental, err := rental.Extend(ren)
 	if err != nil {
 		log.Println("error extending rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error extending rental")
+		WriteResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := rc.rentalRepository.UpdateRental(extendedRental); err != nil {
 		log.Println("error updating rental", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode("error updating rental")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error updating rental"))
 		return
 	}
 

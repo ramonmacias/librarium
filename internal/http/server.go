@@ -105,3 +105,10 @@ func (s *Server) router() http.Handler {
 
 	return withMiddlewares(mux, JsonContentTypeMiddleware, AuthMiddleware)
 }
+
+func withMiddlewares(h http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
+	for _, m := range middlewares {
+		h = m(h)
+	}
+	return h
+}

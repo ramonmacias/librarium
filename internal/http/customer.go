@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"librarium/internal/onboarding"
 	"librarium/internal/user"
-
-	"github.com/google/uuid"
 )
 
 // CustomerController holds all the dependencies needed to
@@ -35,27 +35,24 @@ func (cc *CustomerController) Create(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(customerReq); err != nil {
 		log.Println("error decoding customer request", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error decoding customer request")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding customer request"))
 		return
 	}
 
 	customer, err := onboarding.Customer(customerReq)
 	if err != nil {
 		log.Println("error onboarding customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error onboarding customer")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error onboarding customer"))
 		return
 	}
 
 	if err := cc.userRepository.CreateCustomer(customer); err != nil {
 		log.Println("error creating customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error creating customer")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error creating customer"))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(struct {
 		ID string `json:"id"`
 	}{ID: customer.ID.String()})
@@ -65,8 +62,7 @@ func (cc *CustomerController) Find(w http.ResponseWriter, r *http.Request) {
 	customers, err := cc.userRepository.FindCustomers()
 	if err != nil {
 		log.Println("error finding customers", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error finding customers")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error finding customers"))
 		return
 	}
 
@@ -78,36 +74,31 @@ func (cc *CustomerController) Suspend(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(path, "/")
 
 	if len(parts) != 3 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalida expected path")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid expected path"))
 		return
 	}
 	customerID, err := uuid.Parse(parts[1])
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid customer ID format, expected UUID")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid customer ID format, expected UUID"))
 		return
 	}
 
 	customer, err := cc.userRepository.GetCustomer(customerID)
 	if err != nil {
 		log.Println("error getting customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error getting customer")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error getting customer"))
 		return
 	}
 
 	if err := customer.Suspend(); err != nil {
 		log.Println("error suspending customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error suspending customer")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error suspending customer"))
 		return
 	}
 
 	if err := cc.userRepository.UpdateCustomer(customer); err != nil {
 		log.Println("error updating customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error updating customer")
+		WriteResponse(w, http.StatusBadRequest, errors.New("error updating customer"))
 		return
 	}
 
@@ -119,36 +110,31 @@ func (cc *CustomerController) UnSuspend(w http.ResponseWriter, r *http.Request) 
 	parts := strings.Split(path, "/")
 
 	if len(parts) != 3 {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalida expected path")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid expected path"))
 		return
 	}
 	customerID, err := uuid.Parse(parts[1])
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("invalid customer ID format, expected UUID")
+		WriteResponse(w, http.StatusBadRequest, errors.New("invalid customer ID format, expected UUID"))
 		return
 	}
 
 	customer, err := cc.userRepository.GetCustomer(customerID)
 	if err != nil {
 		log.Println("error getting customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error getting customer")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting customer"))
 		return
 	}
 
 	if err := customer.Unsuspend(); err != nil {
 		log.Println("error unsuspending customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error unsuspending customer")
+		WriteResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := cc.userRepository.UpdateCustomer(customer); err != nil {
 		log.Println("error updating customer", err)
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode("error updating customer")
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error updating customer"))
 		return
 	}
 

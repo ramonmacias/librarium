@@ -8,10 +8,10 @@ import (
 // DatabaseFields is a map type used to translate from the give field name
 // to the expected database field.
 // This is needed specially when doing joins with different tables, for example:
-//   - map[string]string{"company_name": "company.name"}
+//   - map[string]string{"customer_name": "customer.name"}
 //
-// This allows us to filter and sort by company_name and we let the query know to use the
-// company table which could be an alias from a join.
+// This allows us to filter and sort by customer_name and we let the query know to use the
+// customer table which could be an alias from a join.
 type DatabaseFields map[string]string
 
 // SQLPaginateBy returns the sql query in string format to apply the provided pagination.

@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"librarium/internal/query"
 	"time"
 
 	"github.com/google/uuid"
@@ -161,9 +162,12 @@ type Repository interface {
 	// It returns an error in case of failure.
 	GetAsset(id uuid.UUID) (*Asset, error)
 	// FindAssets looks for the assets already inserted in the database.
+	// It returns a paginated response, and use the filters in order to return a subset
+	// of the catalog based on the provided ones.
+	// Uses the sorting to order desc or asc the results.
 	// Returns an empty slice and no error in case of no asset found.
 	// It returns an error if something fails.
-	FindAssets() ([]*Asset, error)
+	FindAssets(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*Asset, error)
 }
 
 // CreateAssetRequest decodes

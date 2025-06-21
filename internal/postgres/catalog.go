@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"librarium/internal/catalog"
+	"librarium/internal/query"
 
 	"github.com/google/uuid"
 )
@@ -86,8 +87,14 @@ func (cr *catalogRepository) GetAsset(id uuid.UUID) (*catalog.Asset, error) {
 // FindAssets looks for the assets already inserted in the database.
 // Returns an empty slice and no error in case of no asset found.
 // It returns an error if something fails.
-func (cr *catalogRepository) FindAssets() ([]*catalog.Asset, error) {
-	rows, err := cr.db.Query("SELECT id, category, created_at, updated_at, info FROM assets")
+func (cr *catalogRepository) FindAssets(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*catalog.Asset, error) {
+	rows, err := cr.db.Query("SELECT id, category, created_at, updated_at, info FROM assets WHERE $1 $2 $3", query.SQLFilterBy(filters, map[string]string{
+		"id":       "assets.id",
+		"category": "assets.category",
+	}), query.SQLPaginateBy(pagination), query.SQLSortBy([]query.Sorting{*sorting}, map[string]string{
+		"id":       "assets.id",
+		"category": "assets.category",
+	}))
 	if err != nil {
 		return nil, fmt.Errorf("error querying for finding assets %w", err)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"librarium/internal/catalog"
+	"librarium/internal/query"
 )
 
 // CatalogController holds all the dependencies needed to
@@ -90,7 +91,18 @@ func (cc *CatalogController) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CatalogController) Find(w http.ResponseWriter, r *http.Request) {
-	assets, err := cc.catalogRepository.FindAssets()
+	pagination, err := query.PaginationFromHTTPRequest(r)
+	if err != nil {
+		log.Println("error getting pagination from the request", err)
+		WriteResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	assets, err := cc.catalogRepository.FindAssets(
+		query.FiltersFromHTTPRequest(r),
+		query.SortingFromHTTPRequest(r),
+		pagination,
+	)
 	if err != nil {
 		log.Println("error finding catalog assets", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error finding catalog assets"))

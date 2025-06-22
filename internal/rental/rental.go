@@ -23,6 +23,7 @@ import (
 	"github.com/google/uuid"
 
 	"librarium/internal/catalog"
+	"librarium/internal/query"
 	"librarium/internal/user"
 )
 
@@ -137,9 +138,12 @@ type Repository interface {
 	// It returns an error if something fails.
 	UpdateRental(rental *Rental) error
 	// FindRentals retrieves the rentals already persisted into the database.
+	// It returns a paginated response, and use the filters in order to return a subset
+	// of the rentals based on the provided ones.
+	// Uses the sorting to order desc or asc the results.
 	// It returns an empty slice and no error in case no rentals found.
 	// It returns an error if something fails.
-	FindRentals() ([]*Rental, error)
+	FindRentals(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*Rental, error)
 	// GetActiveRental retrieves the rental that matches the provided customer and asset IDs and
 	// is in an Active status.
 	// It returns nil, nil in case of not found.

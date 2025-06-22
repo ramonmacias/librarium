@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"librarium/internal/catalog"
 	"librarium/internal/query"
@@ -88,13 +89,30 @@ func (cr *catalogRepository) GetAsset(id uuid.UUID) (*catalog.Asset, error) {
 // Returns an empty slice and no error in case of no asset found.
 // It returns an error if something fails.
 func (cr *catalogRepository) FindAssets(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*catalog.Asset, error) {
-	rows, err := cr.db.Query("SELECT id, category, created_at, updated_at, info FROM assets WHERE $1 $2 $3", query.SQLFilterBy(filters, map[string]string{
+	// TODO: Check on how to add filters for the inner json
+	filterClause := query.SQLFilterBy(filters, map[string]string{
 		"id":       "assets.id",
 		"category": "assets.category",
-	}), query.SQLPaginateBy(pagination), query.SQLSortBy([]query.Sorting{*sorting}, map[string]string{
+	})
+	paginateClause := query.SQLPaginateBy(pagination)
+	sortClause := query.SQLSortBy([]query.Sorting{*sorting}, map[string]string{
 		"id":       "assets.id",
 		"category": "assets.category",
-	}))
+	})
+
+	baseQuery := "SELECT id, category, created_at, updated_at, info FROM assets"
+	queryParts := []string{baseQuery}
+	if filterClause != "" {
+		queryParts = append(queryParts, "WHERE "+filterClause)
+	}
+	if sortClause != "" {
+		queryParts = append(queryParts, sortClause)
+	}
+	if paginateClause != "" {
+		queryParts = append(queryParts, paginateClause)
+	}
+
+	rows, err := cr.db.Query(strings.Join(queryParts, " "))
 	if err != nil {
 		return nil, fmt.Errorf("error querying for finding assets %w", err)
 	}

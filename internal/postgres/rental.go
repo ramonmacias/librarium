@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
+	"librarium/internal/query"
 	"librarium/internal/rental"
 
 	"github.com/google/uuid"
@@ -66,8 +68,33 @@ func (rr *rentalRepository) UpdateRental(rental *rental.Rental) error {
 // FindRentals retrieves the rentals already persisted into the database.
 // It returns an empty slice and no error in case no rentals found.
 // It returns an error if something fails.
-func (rr *rentalRepository) FindRentals() ([]*rental.Rental, error) {
-	rows, err := rr.db.Query("SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals")
+func (rr *rentalRepository) FindRentals(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*rental.Rental, error) {
+	databaseFields := map[string]string{
+		"id":          "rentals.id",
+		"customer_id": "rentals.customer_id",
+		"asset_id":    "rentals.asset_id",
+		"rented_at":   "rentals.rented_at",
+		"due_at":      "rentals.due_at",
+		"returned_at": "rentals.returned_at",
+		"status":      "rentals.status",
+	}
+	filterClause := query.SQLFilterBy(filters, databaseFields)
+	paginateClause := query.SQLPaginateBy(pagination)
+	sortClause := query.SQLSortBy([]query.Sorting{*sorting}, databaseFields)
+
+	baseQuery := "SELECT id, customer_id, asset_id, rented_at, due_at, returned_at, status FROM rentals"
+	queryParts := []string{baseQuery}
+	if filterClause != "" {
+		queryParts = append(queryParts, "WHERE "+filterClause)
+	}
+	if sortClause != "" {
+		queryParts = append(queryParts, sortClause)
+	}
+	if paginateClause != "" {
+		queryParts = append(queryParts, paginateClause)
+	}
+
+	rows, err := rr.db.Query(strings.Join(queryParts, " "))
 	if err != nil {
 		return nil, fmt.Errorf("error querying for finding rentals %w", err)
 	}

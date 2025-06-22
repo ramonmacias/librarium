@@ -14,6 +14,7 @@ package user
 
 import (
 	"errors"
+	"librarium/internal/query"
 
 	"github.com/google/uuid"
 )
@@ -193,7 +194,10 @@ type Repository interface {
 	// It returns an error in case of failure.
 	GetCustomer(id uuid.UUID) (*Customer, error)
 	// FindCustomers retrieves all the customers from the system.
+	// It returns a paginated response, and use the filters in order to return a subset
+	// of the customers based on the provided ones.
+	// Uses the sorting to order desc or asc the results.
 	// It returns an empty slice and no error in case of not found.
 	// It returns an error in case of failure.
-	FindCustomers() ([]*Customer, error)
+	FindCustomers(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*Customer, error)
 }

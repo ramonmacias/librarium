@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"librarium/internal/onboarding"
+	"librarium/internal/query"
 	"librarium/internal/user"
 )
 
@@ -59,7 +60,18 @@ func (cc *CustomerController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CustomerController) Find(w http.ResponseWriter, r *http.Request) {
-	customers, err := cc.userRepository.FindCustomers()
+	pagination, err := query.PaginationFromHTTPRequest(r)
+	if err != nil {
+		log.Println("error getting pagination from the request", err)
+		WriteResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	customers, err := cc.userRepository.FindCustomers(
+		query.FiltersFromHTTPRequest(r),
+		query.SortingFromHTTPRequest(r),
+		pagination,
+	)
 	if err != nil {
 		log.Println("error finding customers", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error finding customers"))

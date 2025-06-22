@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"librarium/internal/catalog"
+	"librarium/internal/query"
 	"librarium/internal/rental"
 	"librarium/internal/user"
 )
@@ -40,7 +41,18 @@ func NewRentalController(rentalRepository rental.Repository, userRepository user
 }
 
 func (rc *RentalController) Find(w http.ResponseWriter, r *http.Request) {
-	rentals, err := rc.rentalRepository.FindRentals()
+	pagination, err := query.PaginationFromHTTPRequest(r)
+	if err != nil {
+		log.Println("error getting pagination from the request", err)
+		WriteResponse(w, http.StatusBadRequest, err)
+		return
+	}
+
+	rentals, err := rc.rentalRepository.FindRentals(
+		query.FiltersFromHTTPRequest(r),
+		query.SortingFromHTTPRequest(r),
+		pagination,
+	)
 	if err != nil {
 		log.Println("error finding rentals", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error finding rentals"))

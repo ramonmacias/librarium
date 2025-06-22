@@ -4,7 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
+	"librarium/internal/query"
 	"librarium/internal/user"
 
 	"github.com/google/uuid"
@@ -84,8 +86,38 @@ func (us *userRepository) GetLibrarianByEmail(email string) (*user.Librarian, er
 // FindCustomers retrieves all the customers from the system.
 // It returns an empty slice and no error in case of not found.
 // It returns an error in case of failure.
-func (us *userRepository) FindCustomers() ([]*user.Customer, error) {
-	rows, err := us.db.Query("SELECT id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status FROM customers")
+func (us *userRepository) FindCustomers(filters query.Filters, sorting *query.Sorting, pagination *query.Pagination) ([]*user.Customer, error) {
+	databaseFields := map[string]string{
+		"id":           "customers.id",
+		"name":         "customers.name",
+		"last_name":    "customers.last_name",
+		"national_id":  "customers.national_id",
+		"email":        "customers.email",
+		"phone_number": "customers.phone_number",
+		"street":       "customers.street",
+		"city":         "customers.city",
+		"state":        "customers.state",
+		"postal_code":  "customers.postal_code",
+		"country":      "customers.country",
+		"status":       "customers.status",
+	}
+	filterClause := query.SQLFilterBy(filters, databaseFields)
+	paginateClause := query.SQLPaginateBy(pagination)
+	sortClause := query.SQLSortBy([]query.Sorting{*sorting}, databaseFields)
+
+	baseQuery := "SELECT id, name, last_name, national_id, email, phone_number, street, city, state, postal_code, country, status FROM customers"
+	queryParts := []string{baseQuery}
+	if filterClause != "" {
+		queryParts = append(queryParts, "WHERE "+filterClause)
+	}
+	if sortClause != "" {
+		queryParts = append(queryParts, sortClause)
+	}
+	if paginateClause != "" {
+		queryParts = append(queryParts, paginateClause)
+	}
+
+	rows, err := us.db.Query(strings.Join(queryParts, " "))
 	if err != nil {
 		return nil, fmt.Errorf("error querying for finding customers %w", err)
 	}

@@ -2,6 +2,8 @@ package catalog_test
 
 import (
 	"errors"
+	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -152,6 +154,157 @@ func TestBuildAsset(t *testing.T) {
 			asset, err := catalog.BuildAsset(tc.info)
 			assert.Equal(t, tc.expectedErr, err)
 			tc.assertAsset(t, asset)
+		})
+	}
+}
+
+func TestUnmarshallCreateAssetRequest(t *testing.T) {
+	testCases := map[string]struct {
+		data        func() []byte
+		expectedErr error
+		assertAsset func(req *catalog.CreateAssetRequest)
+	}{
+		"it should unmarhsall a book asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/book.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryBook, req.Category)
+				book, ok := req.Asset.(*catalog.Book)
+				assert.True(t, ok)
+				assert.Equal(t, "The Lord Of The Rings The Two Towers", book.Title)
+				assert.Equal(t, "J.R.R Tolkien", book.Author)
+				assert.Equal(t, "George Allen & Unwin", book.Publisher)
+				assert.Equal(t, "978-0261102385", book.ISBN)
+				assert.Equal(t, 352, book.PageCount)
+				publishedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, publishedAt, book.PublishedAt)
+			},
+		},
+		"it should unmarshall a magazine asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/magazine.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryMagazine, req.Category)
+				magazine, ok := req.Asset.(*catalog.Magazine)
+				assert.True(t, ok)
+				assert.Equal(t, "National Geographic", magazine.Title)
+				assert.Equal(t, "March 2022", magazine.Issue)
+				assert.Equal(t, "National Geographic Partners", magazine.Publisher)
+				assert.Equal(t, 128, magazine.PageCount)
+				publishedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, publishedAt, magazine.PublishedAt)
+			},
+		},
+		"it should unmarshall a news paper asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/news_paper.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryNewsPaper, req.Category)
+				newsPaper, ok := req.Asset.(*catalog.NewsPaper)
+				assert.True(t, ok)
+				assert.Equal(t, "The New York Times", newsPaper.Title)
+				assert.Equal(t, "Sunday Edition", newsPaper.Edition)
+				assert.Equal(t, "The New York Times Company", newsPaper.Publisher)
+				assert.Equal(t, 94, newsPaper.PageCount)
+				publishedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, publishedAt, newsPaper.PublishedAt)
+			},
+		},
+		"it should unmarshall a DVD asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/dvd.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryDVD, req.Category)
+				dvd, ok := req.Asset.(*catalog.DVD)
+				assert.True(t, ok)
+				assert.Equal(t, "The Lord of the Rings: The Fellowship of the Ring (Extended Edition)", dvd.Title)
+				assert.Equal(t, "Peter Jackson", dvd.Director)
+				assert.Equal(t, "Barrie M. Osborne", dvd.Producer)
+				assert.Equal(t, 228, dvd.DurationMin)
+				assert.Equal(t, "Region 1", dvd.RegionCode)
+				releasedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, releasedAt, dvd.ReleasedAt)
+			},
+		},
+		"it should unmarshall a CD asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/cd.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryCD, req.Category)
+				cd, ok := req.Asset.(*catalog.CD)
+				assert.True(t, ok)
+				assert.Equal(t, "Thriller", cd.Title)
+				assert.Equal(t, "Michael Jackson", cd.Artist)
+				assert.Equal(t, "Epic Records", cd.Label)
+				assert.Equal(t, 9, cd.TrackCount)
+				assert.Equal(t, 42, cd.DurationMin)
+				releasedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, releasedAt, cd.ReleasedAt)
+			},
+		},
+		"it should unmarshall a video game asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/video_game.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {
+				assert.NotNil(t, req)
+				assert.Equal(t, catalog.AssetCategoryVideoGame, req.Category)
+				videoGame, ok := req.Asset.(*catalog.VideoGame)
+				assert.True(t, ok)
+				assert.Equal(t, "The Last of Us", videoGame.Title)
+				assert.Equal(t, "Naughty Dog", videoGame.Developer)
+				assert.Equal(t, "PlayStation 3", videoGame.Platform)
+				assert.Equal(t, "Action-adventure", videoGame.Genre)
+				assert.Equal(t, "+18", videoGame.AgeRating)
+				releasedAt, err := time.Parse(time.RFC3339, "2020-05-20T12:30:30Z")
+				assert.Nil(t, err)
+				assert.Equal(t, releasedAt, videoGame.ReleasedAt)
+			},
+		},
+		"it should return an error for a non expected asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/non_expected_asset.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+			expectedErr: fmt.Errorf("unknown category: %s", "FAIL"),
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			req := &catalog.CreateAssetRequest{}
+			err := req.UnmarshalJSON(tc.data())
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertAsset(req)
 		})
 	}
 }

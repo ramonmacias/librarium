@@ -1,0 +1,11 @@
+{
+    "category": "VIDEO_GAME",
+    "info": {
+        "title": "The Last of Us",
+        "developer": "Naughty Dog",
+        "platform": "PlayStation 3",
+        "genre": "Action-adventure",
+        "age_rating": "+18",
+        "released_at": "2020-05-20T12:30:30Z"
+    }
+}

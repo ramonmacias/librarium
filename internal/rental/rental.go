@@ -87,8 +87,8 @@ func Rent(customer *user.Customer, asset *catalog.Asset, activeRental *Rental, c
 		ID:         uuid.New(),
 		CustomerID: customer.ID,
 		AssetID:    asset.ID,
-		RentedAt:   time.Now(),
-		DueAt:      time.Now().AddDate(0, 1, 0), // 1 month per rental
+		RentedAt:   time.Now().UTC(),
+		DueAt:      time.Now().UTC().AddDate(0, 1, 0), // 1 month per rental
 		Status:     RentalStatusActive,
 	}, nil
 }

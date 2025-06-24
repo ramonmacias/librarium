@@ -175,3 +175,36 @@ func TestHashPassword(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckPassword(t *testing.T) {
+	testCases := map[string]struct {
+		hashedPass  func() string
+		plainPass   string
+		expectedErr error
+	}{
+		"it should return an error if the passwords are not the same": {
+			plainPass: "test-password",
+			hashedPass: func() string {
+				hashBytes, err := bcrypt.GenerateFromPassword([]byte("a-different-test-password"), bcrypt.DefaultCost)
+				assert.Nil(t, err)
+				return string(hashBytes)
+			},
+			expectedErr: bcrypt.ErrMismatchedHashAndPassword,
+		},
+		"it should return no error if both passwords are equal": {
+			plainPass: "test-password",
+			hashedPass: func() string {
+				hashBytes, err := bcrypt.GenerateFromPassword([]byte("test-password"), bcrypt.DefaultCost)
+				assert.Nil(t, err)
+				return string(hashBytes)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := auth.CheckPassword(tc.hashedPass(), tc.plainPass)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}

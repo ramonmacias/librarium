@@ -9,6 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 
 	"librarium/internal/auth"
 	"librarium/internal/user"
@@ -136,6 +137,41 @@ func TestDecodeAndValidate(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErr)
 			}
 			assert.Equal(t, tc.expectedUserID, userID)
+		})
+	}
+}
+
+func TestHashPassword(t *testing.T) {
+	expectedPassword := "test-password"
+
+	testCases := map[string]struct {
+		password         string
+		expectedErr      error
+		assertHashedPass func(hashedPass string)
+	}{
+		"it should return an error if the password is empty": {
+			expectedErr:      errors.New("cannot hash an empty password"),
+			assertHashedPass: func(hashedPass string) {},
+		},
+		"it should return an error if the password length is bigger than 72": {
+			password:         "this_is_a_very_long_password_that_exceeds_seventy_two_characters_for_testing_purposes_123",
+			expectedErr:      bcrypt.ErrPasswordTooLong,
+			assertHashedPass: func(hashedPass string) {},
+		},
+		"it should return the expected hashed password": {
+			password: expectedPassword,
+			assertHashedPass: func(hashedPass string) {
+				err := bcrypt.CompareHashAndPassword([]byte(hashedPass), []byte(expectedPassword))
+				assert.Nil(t, err)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			hashedPass, err := auth.HashPassword(tc.password)
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertHashedPass(hashedPass)
 		})
 	}
 }

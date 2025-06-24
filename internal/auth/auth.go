@@ -92,6 +92,10 @@ func DecodeAndValidate(tokenStr string) (uuid.UUID, error) {
 
 // HashPassword hashes a plain password using bcrypt.
 func HashPassword(password string) (string, error) {
+	if password == "" {
+		return "", errors.New("cannot hash an empty password")
+	}
+
 	hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hashBytes), err
 }

@@ -77,17 +77,17 @@ func Login(loginReq *LoginRequest, librarian *user.Librarian) (s *Session, err e
 // The function returns the librarian ID.
 // The function returns an error if any validation fails in relation with the provided token.
 func DecodeAndValidate(tokenStr string) (uuid.UUID, error) {
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		return []byte(os.Getenv("AUTH_SIGNING_KEY")), nil
 	}, jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}))
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("error parsing token %w", err)
 	}
 
-	if subject, err := token.Claims.GetSubject(); err == nil {
+	if subject, err := token.Claims.GetSubject(); err == nil && subject != "" {
 		return uuid.MustParse(subject), nil
 	}
-	return uuid.Nil, errors.New("error while parsing jwt registered claims")
+	return uuid.Nil, errors.New("missing subject claim while decoding token")
 }
 
 // HashPassword hashes a plain password using bcrypt.

@@ -2,9 +2,11 @@ package auth_test
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
@@ -70,6 +72,70 @@ func TestLogin(t *testing.T) {
 			session, err := auth.Login(tc.loginReq, tc.librarian)
 			assert.Equal(t, tc.expectedErr, err)
 			tc.assertSession(session)
+		})
+	}
+}
+
+func TestDecodeAndValidate(t *testing.T) {
+	t.Setenv("AUTH_SIGNING_KEY", "test_key")
+	expectedUserID := uuid.New()
+
+	testCases := map[string]struct {
+		token          func() string
+		expectedErr    string
+		expectedUserID uuid.UUID
+	}{
+		"it should return an error if the token is expired": {
+			token: func() string {
+				tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+					Subject:   expectedUserID.String(),
+					Issuer:    "librarium",
+					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(-2 * time.Hour)),
+				})
+				signedtok, err := tok.SignedString([]byte("test_key"))
+				assert.Nil(t, err)
+				return signedtok
+			},
+			expectedErr: fmt.Sprintf("error parsing token %s: %s", jwt.ErrTokenInvalidClaims, jwt.ErrTokenExpired),
+		},
+		"it should return an error if we don't have a subject claim": {
+			token: func() string {
+				tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+					Subject:   "",
+					Issuer:    "librarium",
+					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(2 * time.Hour)),
+				})
+				signedtok, err := tok.SignedString([]byte("test_key"))
+				assert.Nil(t, err)
+				return signedtok
+			},
+			expectedErr: "missing subject claim while decoding token",
+		},
+		"it should decode the token and return the expected user ID": {
+			token: func() string {
+				tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+					Subject:   expectedUserID.String(),
+					Issuer:    "librarium",
+					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(2 * time.Hour)),
+				})
+				signedtok, err := tok.SignedString([]byte("test_key"))
+				assert.Nil(t, err)
+				return signedtok
+			},
+			expectedUserID: expectedUserID,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			userID, err := auth.DecodeAndValidate(tc.token())
+			if tc.expectedErr != "" {
+				assert.EqualError(t, err, tc.expectedErr)
+			}
+			assert.Equal(t, tc.expectedUserID, userID)
 		})
 	}
 }

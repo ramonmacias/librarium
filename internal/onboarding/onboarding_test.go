@@ -53,3 +53,52 @@ func TestOnboardLibrarian(t *testing.T) {
 		})
 	}
 }
+
+func TestOnboardCustomer(t *testing.T) {
+	testCases := map[string]struct {
+		customerReq    *onboarding.CustomerRequest
+		expectedErr    error
+		assertCustomer func(customer *user.Customer)
+	}{
+		"it should return an error if any missing customer field is missing": {
+			customerReq:    &onboarding.CustomerRequest{},
+			expectedErr:    errors.New("customer name field is mandatory"),
+			assertCustomer: func(customer *user.Customer) {},
+		},
+		"it should return no error and the expected customer created": {
+			customerReq: &onboarding.CustomerRequest{
+				Name:        "John",
+				LastName:    "Smith",
+				NationalID:  "3349938",
+				Email:       "john.smith@test.com",
+				PhoneNumber: "+34 76898959",
+				Street:      "Street DF",
+				City:        "New York",
+				State:       "NY",
+				PostalCode:  "000394",
+				Country:     "US",
+			},
+			assertCustomer: func(customer *user.Customer) {
+				assert.NotZero(t, customer.ID)
+				assert.Equal(t, "John", customer.Name)
+				assert.Equal(t, "Smith", customer.LastName)
+				assert.Equal(t, "3349938", customer.NationalID)
+				assert.Equal(t, "john.smith@test.com", customer.ContactDetails.Email)
+				assert.Equal(t, "+34 76898959", customer.ContactDetails.PhoneNumber)
+				assert.Equal(t, "Street DF", customer.ContactDetails.Address.Street)
+				assert.Equal(t, "New York", customer.ContactDetails.Address.City)
+				assert.Equal(t, "NY", customer.ContactDetails.Address.State)
+				assert.Equal(t, "000394", customer.ContactDetails.Address.PostalCode)
+				assert.Equal(t, "US", customer.ContactDetails.Address.Country)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			customer, err := onboarding.Customer(tc.customerReq)
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertCustomer(customer)
+		})
+	}
+}

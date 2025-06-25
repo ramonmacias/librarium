@@ -106,3 +106,80 @@ func TestRent(t *testing.T) {
 		})
 	}
 }
+
+func TestRentalReturn(t *testing.T) {
+	testCases := map[string]struct {
+		rental       *rental.Rental
+		expectedErr  error
+		assertRental func(re *rental.Rental)
+	}{
+		"it should return an error if the rental is already returned": {
+			rental: &rental.Rental{
+				Status: rental.RentalStatusReturned,
+			},
+			expectedErr:  errors.New("the rental is already returned"),
+			assertRental: func(re *rental.Rental) {},
+		},
+		"it should return the rental updated and marked as returned": {
+			rental: &rental.Rental{
+				Status: rental.RentalStatusActive,
+			},
+			assertRental: func(re *rental.Rental) {
+				assert.Equal(t, rental.RentalStatusReturned, re.Status)
+				assert.WithinDuration(t, *re.ReturnedAt, time.Now().UTC(), 1*time.Second)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			re, err := rental.Return(tc.rental)
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertRental(re)
+		})
+	}
+}
+
+func TestRentalExtend(t *testing.T) {
+	testCases := map[string]struct {
+		rental       *rental.Rental
+		expectedErr  error
+		assertRental func(re *rental.Rental)
+	}{
+		"it should return an error if the rental is already returned": {
+			rental: &rental.Rental{
+				Status: rental.RentalStatusReturned,
+			},
+			expectedErr:  errors.New("the rental is already returned"),
+			assertRental: func(re *rental.Rental) {},
+		},
+		"it should return an error if we try to extend over the max rental months": {
+			rental: &rental.Rental{
+				Status:   rental.RentalStatusActive,
+				RentedAt: time.Now().UTC(),
+				DueAt:    time.Now().UTC().AddDate(0, 5, 0),
+			},
+			expectedErr:  errors.New("extend max months reached"),
+			assertRental: func(re *rental.Rental) {},
+		},
+		"it should extend by 1 month the rental provided": {
+			rental: &rental.Rental{
+				Status:   rental.RentalStatusActive,
+				RentedAt: time.Now().UTC(),
+				DueAt:    time.Now().UTC().AddDate(0, 1, 0),
+			},
+			assertRental: func(re *rental.Rental) {
+				assert.Equal(t, rental.RentalStatusActive, re.Status)
+				assert.Equal(t, re.DueAt.Month(), time.Now().UTC().AddDate(0, 2, 0).Month())
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			re, err := rental.Extend(tc.rental)
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertRental(re)
+		})
+	}
+}

@@ -166,7 +166,7 @@ func (cd *ContactDetails) validate() error {
 		return errors.New("contact details phone number is mandatory")
 	}
 	if cd.Address == nil {
-		return errors.New("contact details physical addres is mandatory")
+		return errors.New("contact details physical address is mandatory")
 	}
 	if err := cd.Address.validate(); err != nil {
 		return err

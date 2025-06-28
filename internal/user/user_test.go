@@ -196,3 +196,29 @@ func TestBuildCustomer(t *testing.T) {
 		})
 	}
 }
+
+func TestSuspendCustomer(t *testing.T) {
+	testCases := map[string]struct {
+		customer       *user.Customer
+		expectedErr    error
+		expectedStatus user.CustomerStatus
+	}{
+		"it should return an error if the customer is already suspended": {
+			customer:       &user.Customer{Status: user.CustomerStatusSuspended},
+			expectedErr:    errors.New("customer already suspended"),
+			expectedStatus: user.CustomerStatusSuspended,
+		},
+		"it should suspend the customer": {
+			customer:       &user.Customer{Status: user.CustomerStatusActive},
+			expectedStatus: user.CustomerStatusSuspended,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			err := tc.customer.Suspend()
+			assert.Equal(t, tc.expectedErr, err)
+			assert.Equal(t, tc.expectedStatus, tc.customer.Status)
+		})
+	}
+}

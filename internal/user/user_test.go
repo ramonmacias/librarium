@@ -248,3 +248,55 @@ func TestUnsuspendCustomer(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildLibrarian(t *testing.T) {
+	testCases := map[string]struct {
+		name            string
+		email           string
+		password        string
+		expectedErr     error
+		assertLibrarian func(librarian *user.Librarian)
+	}{
+		"it should return an error if the librarian name is missing": {
+			expectedErr: errors.New("librarian name field is mandatory"),
+			assertLibrarian: func(librarian *user.Librarian) {
+				assert.Nil(t, librarian)
+			},
+		},
+		"it should return an error if the librarian email is missing": {
+			name:        "John",
+			expectedErr: errors.New("librarian email field is mandatory"),
+			assertLibrarian: func(librarian *user.Librarian) {
+				assert.Nil(t, librarian)
+			},
+		},
+		"it should return an error if the librarian password is missing": {
+			name:        "John",
+			email:       "john.smith@test.com",
+			expectedErr: errors.New("librarian password field is mandatory"),
+			assertLibrarian: func(librarian *user.Librarian) {
+				assert.Nil(t, librarian)
+			},
+		},
+		"it should return the librarian onboarded": {
+			name:     "John",
+			email:    "john.smith@test.com",
+			password: "supersecure-password",
+			assertLibrarian: func(librarian *user.Librarian) {
+				assert.NotNil(t, librarian)
+				assert.NotZero(t, librarian.ID)
+				assert.Equal(t, "John", librarian.Name)
+				assert.Equal(t, "john.smith@test.com", librarian.Email)
+				assert.Equal(t, "supersecure-password", librarian.Password)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			librarian, err := user.BuildLibrarian(tc.name, tc.email, tc.password)
+			assert.Equal(t, tc.expectedErr, err)
+			tc.assertLibrarian(librarian)
+		})
+	}
+}

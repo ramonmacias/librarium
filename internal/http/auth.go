@@ -50,7 +50,7 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 	session, err := auth.Login(loginReq, librarian)
 	if err != nil {
 		log.Println("error while login", err)
-		WriteResponse(w, http.StatusInternalServerError, err)
+		WriteResponse(w, http.StatusBadRequest, err)
 		return
 	}
 

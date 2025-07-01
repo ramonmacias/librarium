@@ -1,0 +1,3 @@
+mockgen --source=internal/catalog/catalog.go --destination=internal/mocks/mock_catalog.go --package=mocks --mock_names=Repository=MockCatalogRepository
+mockgen --source=internal/rental/rental.go --destination=internal/mocks/mock_rental.go --package=mocks --mock_names=Repository=MockRentalRepository
+mockgen --source=internal/user/user.go --destination=internal/mocks/mock_user.go --package=mocks --mock_names=Repository=MockUserRepository

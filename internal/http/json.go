@@ -7,6 +7,21 @@ import (
 	"net/http"
 )
 
+// DecodeRequest decodes a JSON request body into the provided generic type T.
+// It returns an error in case of failure.
+func DecodeRequest[T any](r *http.Request) (*T, error) {
+	if r.Body == nil {
+		return nil, errors.New("empty request body")
+	}
+	defer r.Body.Close()
+
+	var v T
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		return nil, err
+	}
+	return &v, nil
+}
+
 // WriteResponse writes the provided rsp into the http.ResponseWriter, it handles
 // that all the responses we provided keeps the Content-Type header as application/json.
 // In case the provided rsp is an error, we return a json response format.

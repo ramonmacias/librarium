@@ -29,9 +29,9 @@ func NewAuthController(userRepo user.Repository) (*AuthController, error) {
 }
 
 func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
-	loginReq := &auth.LoginRequest{}
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(loginReq); err != nil {
+	loginReq, err := DecodeRequest[auth.LoginRequest](r)
+	if err != nil {
+		log.Println("error decoding login request", err)
 		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding login request"))
 		return
 	}

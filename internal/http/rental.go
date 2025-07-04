@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -63,9 +62,8 @@ func (rc *RentalController) Find(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
-	rentalReq := &rental.RentalRequest{}
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(rentalReq); err != nil {
+	rentalReq, err := DecodeRequest[rental.RentalRequest](r)
+	if err != nil {
 		log.Println("error decoding rental request", err)
 		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding rental request"))
 		return
@@ -89,9 +87,19 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting active rental"))
 		return
 	}
+	customerRentals, err := rc.rentalRepository.FindRentals(query.Filters{
+		"customer_id": query.Filter{
+			Type:  query.FilterTypeEqual,
+			Value: rentalReq.CustomerID.String(),
+		},
+	}, nil, nil)
+	if err != nil {
+		log.Println("error getting customer rentals", err)
+		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting customer rentals"))
+		return
+	}
 
-	// TODO: Need to define the filters for repositories
-	ren, err := rental.Rent(customer, asset, activeRental, nil)
+	ren, err := rental.Rent(customer, asset, activeRental, customerRentals)
 	if err != nil {
 		log.Println("error renting asset", err)
 		WriteResponse(w, http.StatusBadRequest, err)

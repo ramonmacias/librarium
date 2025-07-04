@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -58,9 +57,8 @@ func (ac *AuthController) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ac *AuthController) Signup(w http.ResponseWriter, r *http.Request) {
-	librarianRequest := &onboarding.LibrarianRequest{}
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(librarianRequest); err != nil {
+	librarianRequest, err := DecodeRequest[onboarding.LibrarianRequest](r)
+	if err != nil {
 		log.Println("error decoding request while signup", err)
 		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding signup request"))
 		return

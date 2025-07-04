@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -31,9 +30,8 @@ func NewCatalogController(catalogRepository catalog.Repository) (*CatalogControl
 }
 
 func (cc *CatalogController) Create(w http.ResponseWriter, r *http.Request) {
-	createAssetReq := &catalog.CreateAssetRequest{}
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(createAssetReq); err != nil {
+	createAssetReq, err := DecodeRequest[catalog.CreateAssetRequest](r)
+	if err != nil {
 		log.Println("error decoding request while login", err)
 		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding asset request"))
 		return

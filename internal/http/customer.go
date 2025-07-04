@@ -32,9 +32,8 @@ func NewCustomerController(userRepository user.Repository) (*CustomerController,
 }
 
 func (cc *CustomerController) Create(w http.ResponseWriter, r *http.Request) {
-	customerReq := &onboarding.CustomerRequest{}
-	defer r.Body.Close()
-	if err := json.NewDecoder(r.Body).Decode(customerReq); err != nil {
+	customerReq, err := DecodeRequest[onboarding.CustomerRequest](r)
+	if err != nil {
 		log.Println("error decoding customer request", err)
 		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding customer request"))
 		return

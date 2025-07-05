@@ -7,8 +7,11 @@ import (
 	"io"
 	stdHttp "net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -348,6 +351,117 @@ func TestAuthSignup(t *testing.T) {
 
 			assert.Equal(t, tc.expectedStatusCode, res.StatusCode)
 			tc.assertBody(res.Body)
+		})
+	}
+}
+
+func TestAuthMiddleware(t *testing.T) {
+	t.Setenv("AUTH_SIGNING_KEY", "awesome-siging-key")
+	mux := stdHttp.NewServeMux()
+	mux.HandleFunc("/librarian", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	mux.HandleFunc("/login", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	mux.HandleFunc("/signup", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	ts := httptest.NewServer(http.AuthMiddleware(mux))
+	defer ts.Close()
+
+	testCases := map[string]struct {
+		request        func() *stdHttp.Request
+		assertResponse func(rsp *stdHttp.Response)
+	}{
+		"it should return no error if call the signup endpoint without Authorization header": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/signup", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should return no error if call the login endpoint without Authorization header": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/login", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should return an error if the Authorization header is missing": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/librarian", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusUnauthorized, rsp.StatusCode)
+				errorMsg := struct {
+					Error string `json:"error"`
+				}{}
+				err := json.NewDecoder(rsp.Body).Decode(&errorMsg)
+				assert.Nil(t, err)
+				err = rsp.Body.Close()
+				assert.Nil(t, err)
+				assert.Equal(t, "unauthorized", errorMsg.Error)
+			},
+		},
+		"it should return an error if the Authorization header is given but with a wrong token": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/librarian", stdHttp.NoBody)
+				assert.Nil(t, err)
+				req.Header.Add("Authorization", "awesome-token")
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusUnauthorized, rsp.StatusCode)
+				errorMsg := struct {
+					Error string `json:"error"`
+				}{}
+				err := json.NewDecoder(rsp.Body).Decode(&errorMsg)
+				assert.Nil(t, err)
+				err = rsp.Body.Close()
+				assert.Nil(t, err)
+				assert.Equal(t, "unauthorized", errorMsg.Error)
+			},
+		},
+		"it should reach the handle if the provided token is valid": {
+			request: func() *stdHttp.Request {
+				tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
+					Subject:   uuid.New().String(),
+					Issuer:    "librarium",
+					IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
+					ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(2 * time.Hour)),
+				})
+				token, err := tok.SignedString([]byte(os.Getenv("AUTH_SIGNING_KEY")))
+				assert.Nil(t, err)
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/librarian", stdHttp.NoBody)
+				assert.Nil(t, err)
+				req.Header.Add("Authorization", token)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			rsp, err := stdHttp.DefaultClient.Do(tc.request())
+			assert.Nil(t, err)
+			tc.assertResponse(rsp)
 		})
 	}
 }

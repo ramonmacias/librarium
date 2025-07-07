@@ -32,8 +32,8 @@ func NewCatalogController(catalogRepository catalog.Repository) (*CatalogControl
 func (cc *CatalogController) Create(w http.ResponseWriter, r *http.Request) {
 	createAssetReq, err := DecodeRequest[catalog.CreateAssetRequest](r)
 	if err != nil {
-		log.Println("error decoding request while login", err)
-		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding asset request"))
+		log.Println("error decoding request while creating catalog asset", err)
+		WriteResponse(w, http.StatusBadRequest, errors.New("error decoding asset catalog create request"))
 		return
 	}
 

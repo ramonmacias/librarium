@@ -129,3 +129,105 @@ func TestWriteResponse(t *testing.T) {
 		})
 	}
 }
+
+func TestJSONMiddleware(t *testing.T) {
+	mux := stdHttp.NewServeMux()
+	mux.HandleFunc("POST /librarian", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	mux.HandleFunc("PUT /customer", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	mux.HandleFunc("GET /catalog", func(w stdHttp.ResponseWriter, r *stdHttp.Request) {
+		w.WriteHeader(stdHttp.StatusOK)
+	})
+	ts := httptest.NewServer(http.JsonContentTypeMiddleware(mux))
+	defer ts.Close()
+
+	testCases := map[string]struct {
+		request        func() *stdHttp.Request
+		assertResponse func(rsp *stdHttp.Response)
+	}{
+		"it should return no error non check content header if the http method is not POST or PUT": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodGet, ts.URL+"/catalog", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should return an error if the http method is POST and the content type header is missing": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodPost, ts.URL+"/librarian", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusBadRequest, rsp.StatusCode)
+				errorMsg := struct {
+					Error string `json:"error"`
+				}{}
+				err := json.NewDecoder(rsp.Body).Decode(&errorMsg)
+				assert.Nil(t, err)
+				err = rsp.Body.Close()
+				assert.Nil(t, err)
+				assert.Equal(t, "Content-Type must be application/json", errorMsg.Error)
+			},
+		},
+		"it should return an error if the http method is PUT and the content type header is missing": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodPut, ts.URL+"/customer", stdHttp.NoBody)
+				assert.Nil(t, err)
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusBadRequest, rsp.StatusCode)
+				errorMsg := struct {
+					Error string `json:"error"`
+				}{}
+				err := json.NewDecoder(rsp.Body).Decode(&errorMsg)
+				assert.Nil(t, err)
+				err = rsp.Body.Close()
+				assert.Nil(t, err)
+				assert.Equal(t, "Content-Type must be application/json", errorMsg.Error)
+			},
+		},
+		"it should return no error if the http method is POST and the content type header is given": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodPost, ts.URL+"/librarian", stdHttp.NoBody)
+				assert.Nil(t, err)
+				req.Header.Add("Content-Type", "application/json")
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should return no error if the http method is PUT and the content type header is given": {
+			request: func() *stdHttp.Request {
+				req, err := stdHttp.NewRequest(stdHttp.MethodPut, ts.URL+"/customer", stdHttp.NoBody)
+				assert.Nil(t, err)
+				req.Header.Add("Content-Type", "application/json")
+				return req
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.NotNil(t, rsp)
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			rsp, err := stdHttp.DefaultClient.Do(tc.request())
+			assert.Nil(t, err)
+			tc.assertResponse(rsp)
+		})
+	}
+}

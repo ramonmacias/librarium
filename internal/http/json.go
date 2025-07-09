@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 )
@@ -10,13 +11,17 @@ import (
 // DecodeRequest decodes a JSON request body into the provided generic type T.
 // It returns an error in case of failure.
 func DecodeRequest[T any](r *http.Request) (*T, error) {
-	if r.Body == nil {
+	defer r.Body.Close()
+	buf, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(buf) == 0 {
 		return nil, errors.New("empty request body")
 	}
-	defer r.Body.Close()
 
 	var v T
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+	if err := json.Unmarshal(buf, &v); err != nil {
 		return nil, err
 	}
 	return &v, nil

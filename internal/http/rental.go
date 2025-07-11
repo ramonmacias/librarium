@@ -75,10 +75,18 @@ func (rc *RentalController) Create(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting customer"))
 		return
 	}
+	if customer == nil {
+		WriteResponse(w, http.StatusNotFound, errors.New("customer not found"))
+		return
+	}
 	asset, err := rc.catalogRepository.GetAsset(rentalReq.AssetID)
 	if err != nil {
 		log.Println("error getting asset", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting asset"))
+		return
+	}
+	if asset == nil {
+		WriteResponse(w, http.StatusNotFound, errors.New("asset not found"))
 		return
 	}
 	activeRental, err := rc.rentalRepository.GetActiveRental(customer.ID, asset.ID)

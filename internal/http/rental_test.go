@@ -571,7 +571,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusBadRequest,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "invalid expected path", resp.Error)
 			},
 		},
@@ -581,7 +582,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusBadRequest,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "invalid rental ID format, expected UUID", resp.Error)
 			},
 		},
@@ -595,7 +597,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusInternalServerError,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "error getting rental", resp.Error)
 			},
 		},
@@ -609,7 +612,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusNotFound,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "rental not found", resp.Error)
 			},
 		},
@@ -626,7 +630,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusBadRequest,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "the rental is already returned", resp.Error)
 			},
 		},
@@ -658,7 +663,8 @@ func TestExtendRental(t *testing.T) {
 			expectedStatusCode: stdHttp.StatusInternalServerError,
 			assertBody: func(body io.Reader) {
 				var resp struct{ Error string }
-				_ = json.NewDecoder(body).Decode(&resp)
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
 				assert.Equal(t, "error updating rental", resp.Error)
 			},
 		},

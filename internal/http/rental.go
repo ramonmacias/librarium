@@ -143,11 +143,15 @@ func (rc *RentalController) Return(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting rental"))
 		return
 	}
+	if ren == nil {
+		WriteResponse(w, http.StatusNotFound, errors.New("rental not found"))
+		return
+	}
 
 	returnedRental, err := rental.Return(ren)
 	if err != nil {
 		log.Println("error returning rental", err)
-		WriteResponse(w, http.StatusBadRequest, errors.New("error returning rental"))
+		WriteResponse(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -176,6 +180,10 @@ func (rc *RentalController) Extend(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error getting rental", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting rental"))
+		return
+	}
+	if ren == nil {
+		WriteResponse(w, http.StatusNotFound, errors.New("rental not found"))
 		return
 	}
 

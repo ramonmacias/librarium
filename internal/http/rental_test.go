@@ -386,3 +386,330 @@ func TestCreateRental(t *testing.T) {
 		})
 	}
 }
+
+func TestReturnRental(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepository := mocks.NewMockUserRepository(ctrl)
+	catalogRepository := mocks.NewMockCatalogRepository(ctrl)
+	rentalRepository := mocks.NewMockRentalRepository(ctrl)
+	controller, err := http.NewRentalController(rentalRepository, userRepository, catalogRepository)
+	assert.Nil(t, err)
+	assert.NotNil(t, controller)
+
+	rentalID := uuid.New()
+
+	testCases := map[string]struct {
+		path               string
+		mocks              func()
+		expectedStatusCode int
+		assertBody         func(body io.Reader)
+	}{
+		"it should return an error on invalid path structure": {
+			path:               "/rentals/return",
+			mocks:              func() {},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "invalid expected path", resp.Error)
+			},
+		},
+		"it should return an error on invalid UUID": {
+			path:               "/rentals/not-a-uuid/return",
+			mocks:              func() {},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "invalid rental ID format, expected UUID", resp.Error)
+			},
+		},
+		"it should return an error if getting rental repo call fails": {
+			path: fmt.Sprintf("/rentals/%s/return", rentalID.String()),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(nil, errors.New("expected error"))
+			},
+			expectedStatusCode: stdHttp.StatusInternalServerError,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "error getting rental", resp.Error)
+			},
+		},
+		"it should return a not found error if cannot find the rental": {
+			path: fmt.Sprintf("/rentals/%s/return", rentalID.String()),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(nil, nil)
+			},
+			expectedStatusCode: stdHttp.StatusNotFound,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "rental not found", resp.Error)
+			},
+		},
+		"it should return an error if we cannot return the rental": {
+			path: fmt.Sprintf("/rentals/%s/return", rentalID.String()),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{ID: rentalID, Status: rental.RentalStatusReturned}, nil)
+			},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "the rental is already returned", resp.Error)
+			},
+		},
+		"it should return an error if update rental repo call fails": {
+			path: fmt.Sprintf("/rentals/%s/return", rentalID.String()),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{ID: rentalID, Status: rental.RentalStatusActive}, nil)
+				rentalMatcher := mocks.CustomMatcher{
+					Match: func(x any) bool {
+						re, ok := x.(*rental.Rental)
+						assert.True(t, ok)
+
+						return assert.Equal(t, rentalID, re.ID) && assert.Equal(t, rental.RentalStatusReturned, re.Status) &&
+							assert.WithinDuration(t, time.Now().UTC(), *re.ReturnedAt, 2*time.Minute)
+					},
+				}
+				rentalRepository.EXPECT().
+					UpdateRental(rentalMatcher).
+					Return(errors.New("expected error"))
+			},
+			expectedStatusCode: stdHttp.StatusInternalServerError,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				err = json.NewDecoder(body).Decode(&resp)
+				assert.Nil(t, err)
+				assert.Equal(t, "error updating rental", resp.Error)
+			},
+		},
+		"it should return no error if success": {
+			path: fmt.Sprintf("/rentals/%s/return", rentalID.String()),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{ID: rentalID, Status: rental.RentalStatusActive}, nil)
+				rentalMatcher := mocks.CustomMatcher{
+					Match: func(x any) bool {
+						re, ok := x.(*rental.Rental)
+						assert.True(t, ok)
+
+						return assert.Equal(t, rentalID, re.ID) && assert.Equal(t, rental.RentalStatusReturned, re.Status) &&
+							assert.WithinDuration(t, time.Now().UTC(), *re.ReturnedAt, 2*time.Minute)
+					},
+				}
+				rentalRepository.EXPECT().
+					UpdateRental(rentalMatcher).
+					Return(nil)
+			},
+			expectedStatusCode: stdHttp.StatusNoContent,
+			assertBody: func(body io.Reader) {
+				data, err := io.ReadAll(body)
+				assert.Nil(t, err)
+				assert.Empty(t, data)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			tc.mocks()
+
+			req := httptest.NewRequest(stdHttp.MethodPost, tc.path, nil)
+			rec := httptest.NewRecorder()
+
+			controller.Return(rec, req)
+
+			res := rec.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, tc.expectedStatusCode, res.StatusCode)
+			tc.assertBody(res.Body)
+		})
+	}
+}
+
+func TestExtendRental(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	userRepository := mocks.NewMockUserRepository(ctrl)
+	catalogRepository := mocks.NewMockCatalogRepository(ctrl)
+	rentalRepository := mocks.NewMockRentalRepository(ctrl)
+	controller, err := http.NewRentalController(rentalRepository, userRepository, catalogRepository)
+	assert.Nil(t, err)
+	assert.NotNil(t, controller)
+
+	rentalID := uuid.New()
+
+	testCases := map[string]struct {
+		path               string
+		mocks              func()
+		expectedStatusCode int
+		assertBody         func(body io.Reader)
+	}{
+		"it should return an error for invalid path structure": {
+			path:               "/rentals/extend",
+			mocks:              func() {},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "invalid expected path", resp.Error)
+			},
+		},
+		"it should return an error for invalid UUID format": {
+			path:               "/rentals/not-a-uuid/extend",
+			mocks:              func() {},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "invalid rental ID format, expected UUID", resp.Error)
+			},
+		},
+		"it should return and error if getting rental repo call fails": {
+			path: fmt.Sprintf("/rentals/%s/extend", rentalID),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(nil, errors.New("expected error"))
+			},
+			expectedStatusCode: stdHttp.StatusInternalServerError,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "error getting rental", resp.Error)
+			},
+		},
+		"it should return an error if rental cannot be find": {
+			path: fmt.Sprintf("/rentals/%s/extend", rentalID),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(nil, nil)
+			},
+			expectedStatusCode: stdHttp.StatusNotFound,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "rental not found", resp.Error)
+			},
+		},
+		"it should return an error if we cannot extend the rental": {
+			path: fmt.Sprintf("/rentals/%s/extend", rentalID),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{
+						ID:     rentalID,
+						Status: rental.RentalStatusReturned,
+					}, nil)
+			},
+			expectedStatusCode: stdHttp.StatusBadRequest,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "the rental is already returned", resp.Error)
+			},
+		},
+		"it should return an error if updating rental repo call fails": {
+			path: fmt.Sprintf("/rentals/%s/extend", rentalID),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{
+						ID:       rentalID,
+						Status:   rental.RentalStatusActive,
+						DueAt:    time.Now().AddDate(0, 1, 0).UTC(),
+						RentedAt: time.Now().UTC(),
+					}, nil)
+				rentalMatcher := mocks.CustomMatcher{
+					Match: func(x any) bool {
+						re, ok := x.(*rental.Rental)
+						assert.True(t, ok)
+
+						return assert.Equal(t, rentalID, re.ID) && assert.Equal(t, rental.RentalStatusActive, re.Status) &&
+							assert.WithinDuration(t, time.Now().UTC(), re.RentedAt, 2*time.Minute) &&
+							assert.WithinDuration(t, time.Now().AddDate(0, 2, 0).UTC(), re.DueAt, 2*time.Minute)
+					},
+				}
+				rentalRepository.EXPECT().
+					UpdateRental(rentalMatcher).
+					Return(errors.New("expected error"))
+			},
+			expectedStatusCode: stdHttp.StatusInternalServerError,
+			assertBody: func(body io.Reader) {
+				var resp struct{ Error string }
+				_ = json.NewDecoder(body).Decode(&resp)
+				assert.Equal(t, "error updating rental", resp.Error)
+			},
+		},
+		"it should return no error on success": {
+			path: fmt.Sprintf("/rentals/%s/extend", rentalID),
+			mocks: func() {
+				rentalRepository.EXPECT().
+					GetRental(rentalID).
+					Return(&rental.Rental{
+						ID:       rentalID,
+						Status:   rental.RentalStatusActive,
+						DueAt:    time.Now().AddDate(0, 1, 0).UTC(),
+						RentedAt: time.Now().UTC(),
+					}, nil)
+				rentalMatcher := mocks.CustomMatcher{
+					Match: func(x any) bool {
+						re, ok := x.(*rental.Rental)
+						assert.True(t, ok)
+
+						return assert.Equal(t, rentalID, re.ID) && assert.Equal(t, rental.RentalStatusActive, re.Status) &&
+							assert.WithinDuration(t, time.Now().UTC(), re.RentedAt, 2*time.Minute) &&
+							assert.WithinDuration(t, time.Now().AddDate(0, 2, 0).UTC(), re.DueAt, 2*time.Minute)
+					},
+				}
+				rentalRepository.EXPECT().
+					UpdateRental(rentalMatcher).
+					Return(nil)
+			},
+			expectedStatusCode: stdHttp.StatusNoContent,
+			assertBody: func(body io.Reader) {
+				data, err := io.ReadAll(body)
+				assert.NoError(t, err)
+				assert.Empty(t, data)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			tc.mocks()
+
+			req := httptest.NewRequest(stdHttp.MethodPost, tc.path, nil)
+			rec := httptest.NewRecorder()
+
+			controller.Extend(rec, req)
+
+			res := rec.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, tc.expectedStatusCode, res.StatusCode)
+			tc.assertBody(res.Body)
+		})
+	}
+}

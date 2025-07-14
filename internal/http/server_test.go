@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"librarium/internal/auth"
+	"librarium/internal/catalog"
 	"librarium/internal/http"
 	"librarium/internal/mocks"
 	"librarium/internal/onboarding"
@@ -132,7 +133,7 @@ func TestRoutingAuth(t *testing.T) {
 				assert.Equal(t, stdHttp.StatusConflict, rsp.StatusCode)
 			},
 		},
-		"it shoild rout to login endpoint": {
+		"it should route to login endpoint": {
 			path:   "/login",
 			method: stdHttp.MethodPost,
 			body: func() io.Reader {
@@ -152,7 +153,87 @@ func TestRoutingAuth(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			req := buidlServerWithoutAuthRequest(t, tc.method, ts.httpServer.URL, tc.path, tc.body())
+			req := buildServerWithoutAuthRequest(t, tc.method, ts.httpServer.URL, tc.path, tc.body())
+
+			tc.mocks()
+			rsp, err := ts.serverCl.Do(req)
+			assert.Nil(t, err)
+			tc.assertResponse(rsp)
+		})
+	}
+}
+
+func TestRoutingCatalogAsset(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ts := buildTestServer(t)
+	defer ts.httpServer.Close()
+
+	testCases := map[string]struct {
+		path           string
+		method         string
+		body           func() io.Reader
+		mocks          func()
+		assertResponse func(rsp *stdHttp.Response)
+	}{
+		"it should route to catalog asset creation": {
+			path:   "/catalog/assets",
+			method: stdHttp.MethodPost,
+			body: func() io.Reader {
+				createAssetReq := catalog.CreateAssetRequest{
+					Category: catalog.AssetCategoryBook,
+					Asset: &catalog.Book{
+						Title:       "The Lord Of The Rings The Two Towers",
+						Author:      "J.R.R Tolkien",
+						Publisher:   "George Allen & Unwin",
+						ISBN:        "978-0261102385",
+						PageCount:   352,
+						PublishedAt: time.Date(1954, time.November, 11, 0, 0, 0, 0, time.UTC),
+					},
+				}
+				buf, err := json.Marshal(&createAssetReq)
+				assert.Nil(t, err)
+				return bytes.NewReader(buf)
+			},
+			mocks: func() {
+				ts.catalogReposiotry.EXPECT().CreateAsset(gomock.Any()).Return(nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should route to catalog asset deletion": {
+			path:   "/catalog/assets/" + uuid.NewString(),
+			method: stdHttp.MethodDelete,
+			body: func() io.Reader {
+				return stdHttp.NoBody
+			},
+			mocks: func() {
+				ts.catalogReposiotry.EXPECT().GetAsset(gomock.Any()).Return(nil, nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusNotFound, rsp.StatusCode)
+			},
+		},
+		"it should route to find catalog assets": {
+			path:   "/catalog/assets",
+			method: stdHttp.MethodGet,
+			body: func() io.Reader {
+				return stdHttp.NoBody
+			},
+			mocks: func() {
+				ts.catalogReposiotry.EXPECT().FindAssets(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*catalog.Asset{}, nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			req := buildServerWithAuthRequest(t, tc.method, ts.httpServer.URL, tc.path, tc.body())
 
 			tc.mocks()
 			rsp, err := ts.serverCl.Do(req)
@@ -195,7 +276,7 @@ func buildTestServer(t *testing.T) testDependencies {
 	}
 }
 
-func buidlServerWithoutAuthRequest(t *testing.T, method, url, path string, body io.Reader) *stdHttp.Request {
+func buildServerWithoutAuthRequest(t *testing.T, method, url, path string, body io.Reader) *stdHttp.Request {
 	req, err := stdHttp.NewRequest(method, url+path, body)
 	assert.Nil(t, err)
 	if body != stdHttp.NoBody {
@@ -205,11 +286,14 @@ func buidlServerWithoutAuthRequest(t *testing.T, method, url, path string, body 
 	return req
 }
 
-func buildServerWithAuthRequest(t *testing.T, method, url, path string) *stdHttp.Request {
+func buildServerWithAuthRequest(t *testing.T, method, url, path string, body io.Reader) *stdHttp.Request {
 	t.Setenv("AUTH_SIGNING_KEY", "test_key")
 
-	req, err := stdHttp.NewRequest(method, url+path, stdHttp.NoBody)
+	req, err := stdHttp.NewRequest(method, url+path, body)
 	assert.Nil(t, err)
+	if body != stdHttp.NoBody {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Subject:   uuid.NewString(),

@@ -63,6 +63,7 @@ func JsonContentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if (r.Method == http.MethodPost || r.Method == http.MethodPut) && r.Header.Get("Content-Type") != "application/json" {
 			WriteResponse(w, http.StatusBadRequest, errors.New("Content-Type must be application/json"))
+			return
 		}
 
 		next.ServeHTTP(w, r)

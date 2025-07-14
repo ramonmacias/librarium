@@ -14,8 +14,8 @@ const (
 )
 
 type Server struct {
+	*http.Server
 	address               string
-	srv                   *http.Server
 	stopOngoingGracefully context.CancelFunc
 
 	authController     *AuthController
@@ -43,31 +43,31 @@ func NewServer(address string, authController *AuthController, catalogController
 	if rentalController == nil {
 		return nil, errors.New("rental controller is mandatory")
 	}
-
-	return &Server{
+	srv := &Server{
 		address:            address,
 		authController:     authController,
 		catalogController:  catalogController,
 		customerController: customerController,
 		rentalController:   rentalController,
-	}, nil
-}
-
-func (s *Server) ListenAndServe() {
+	}
 	// Ensure in-flight requests aren't cancelled immediately on SIGTERM
 	ongoingCtx, stopOngoingGracefully := context.WithCancel(context.Background())
-	s.srv = &http.Server{
-		Addr:    ":4000",
-		Handler: s.router(),
+	srv.Server = &http.Server{
+		Addr:    address,
+		Handler: srv.router(),
 		BaseContext: func(_ net.Listener) context.Context {
 			return ongoingCtx
 		},
 	}
-	s.stopOngoingGracefully = stopOngoingGracefully
+	srv.stopOngoingGracefully = stopOngoingGracefully
 
+	return srv, nil
+}
+
+func (s *Server) ListenAndServe() {
 	go func() {
-		log.Println("server starting at :4000")
-		if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Println("server starting at ", s.address)
+		if err := s.Server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
@@ -76,7 +76,7 @@ func (s *Server) ListenAndServe() {
 func (s *Server) Shutdown() error {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), _shutdownPeriod)
 	defer cancel()
-	err := s.srv.Shutdown(shutdownCtx)
+	err := s.Server.Shutdown(shutdownCtx)
 	s.stopOngoingGracefully()
 
 	return err

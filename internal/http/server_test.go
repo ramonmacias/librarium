@@ -243,6 +243,87 @@ func TestRoutingCatalogAsset(t *testing.T) {
 	}
 }
 
+func TestRoutingCustomers(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ts := buildTestServer(t)
+	defer ts.httpServer.Close()
+
+	testCases := map[string]struct {
+		path           string
+		method         string
+		body           func() io.Reader
+		mocks          func()
+		assertResponse func(rsp *stdHttp.Response)
+	}{
+		"it should route to the find customers endpoint": {
+			path:   "/customers",
+			method: stdHttp.MethodGet,
+			body: func() io.Reader {
+				return stdHttp.NoBody
+			},
+			mocks: func() {
+				ts.userRepository.EXPECT().FindCustomers(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*user.Customer{}, nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusOK, rsp.StatusCode)
+			},
+		},
+		"it should route to the create customers endpoint": {
+			path:   "/customers",
+			method: stdHttp.MethodPost,
+			body: func() io.Reader {
+				createCustomerReq := onboarding.CustomerRequest{}
+				buf, err := json.Marshal(&createCustomerReq)
+				assert.Nil(t, err)
+				return bytes.NewReader(buf)
+			},
+			mocks: func() {},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusBadRequest, rsp.StatusCode)
+			},
+		},
+		"it should route to the suspend customer endpoint": {
+			path:   "/customers/" + uuid.NewString() + "/suspend",
+			method: stdHttp.MethodPut,
+			body: func() io.Reader {
+				return stdHttp.NoBody
+			},
+			mocks: func() {
+				ts.userRepository.EXPECT().GetCustomer(gomock.Any()).Return(nil, nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusNotFound, rsp.StatusCode)
+			},
+		},
+		"it should route to the unsuspend customer endpoint": {
+			path:   "/customers/" + uuid.NewString() + "/unsuspend",
+			method: stdHttp.MethodPut,
+			body: func() io.Reader {
+				return stdHttp.NoBody
+			},
+			mocks: func() {
+				ts.userRepository.EXPECT().GetCustomer(gomock.Any()).Return(nil, nil)
+			},
+			assertResponse: func(rsp *stdHttp.Response) {
+				assert.Equal(t, stdHttp.StatusNotFound, rsp.StatusCode)
+			},
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			req := buildServerWithAuthRequest(t, tc.method, ts.httpServer.URL, tc.path, tc.body())
+
+			tc.mocks()
+			rsp, err := ts.serverCl.Do(req)
+			assert.Nil(t, err)
+			tc.assertResponse(rsp)
+		})
+	}
+}
+
 func buildTestServer(t *testing.T) testDependencies {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -279,7 +360,7 @@ func buildTestServer(t *testing.T) testDependencies {
 func buildServerWithoutAuthRequest(t *testing.T, method, url, path string, body io.Reader) *stdHttp.Request {
 	req, err := stdHttp.NewRequest(method, url+path, body)
 	assert.Nil(t, err)
-	if body != stdHttp.NoBody {
+	if method == stdHttp.MethodPost || method == stdHttp.MethodPut {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
@@ -291,7 +372,7 @@ func buildServerWithAuthRequest(t *testing.T, method, url, path string, body io.
 
 	req, err := stdHttp.NewRequest(method, url+path, body)
 	assert.Nil(t, err)
-	if body != stdHttp.NoBody {
+	if method == stdHttp.MethodPost || method == stdHttp.MethodPut {
 		req.Header.Set("Content-Type", "application/json")
 	}
 

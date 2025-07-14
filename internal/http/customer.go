@@ -100,6 +100,10 @@ func (cc *CustomerController) Suspend(w http.ResponseWriter, r *http.Request) {
 		WriteResponse(w, http.StatusBadRequest, errors.New("error getting customer"))
 		return
 	}
+	if customer == nil {
+		WriteResponse(w, http.StatusNotFound, "customer not found")
+		return
+	}
 
 	if err := customer.Suspend(); err != nil {
 		log.Println("error suspending customer", err)
@@ -134,6 +138,10 @@ func (cc *CustomerController) UnSuspend(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		log.Println("error getting customer", err)
 		WriteResponse(w, http.StatusInternalServerError, errors.New("error getting customer"))
+		return
+	}
+	if customer == nil {
+		WriteResponse(w, http.StatusNotFound, "customer not found")
 		return
 	}
 

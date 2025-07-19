@@ -26,7 +26,7 @@ func PaginationFromHTTPRequest(req *http.Request) (*Pagination, error) {
 	if limitStr != "" {
 		limit, err = strconv.Atoi(limitStr)
 		if err != nil {
-			return nil, fmt.Errorf("error getting limit from http request: %W", err)
+			return nil, fmt.Errorf("error getting limit from http request: %w", err)
 		}
 	}
 

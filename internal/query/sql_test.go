@@ -82,6 +82,12 @@ func TestSQLFilterBy(t *testing.T) {
 			filters:     query.Filters{},
 			expectedRes: "",
 		},
+		"it should apply no filter if the fields is not in the expected filters": {
+			filters: query.Filters{
+				"unexpected_field": query.Filter{Type: query.FilterTypeEqual, Value: "unexpected_value"},
+			},
+			expectedRes: "",
+		},
 		"it should apply equal filter": {
 			filters: query.Filters{
 				"some_field": query.Filter{Type: query.FilterTypeEqual, Value: "some-value"},
@@ -129,6 +135,12 @@ func TestSQLFilterBy(t *testing.T) {
 				"some_field": query.Filter{Type: query.FilterTypeRange, Value: query.RangeFilter{From: "some", To: "value"}},
 			},
 			expectedRes: `some_table.some_field >= 'some' AND some_table.some_field <= 'value'`,
+		},
+		"it should apply only tail range filter": {
+			filters: query.Filters{
+				"some_field": query.Filter{Type: query.FilterTypeRange, Value: query.RangeFilter{To: "value"}},
+			},
+			expectedRes: `some_table.some_field <= 'value'`,
 		},
 		"it should apply not equal filter": {
 			filters: query.Filters{

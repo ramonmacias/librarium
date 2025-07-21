@@ -39,6 +39,15 @@ func TestBuildCustomer(t *testing.T) {
 				assert.Nil(t, customer)
 			},
 		},
+		"it sohuld return an error if the customer details are missing": {
+			name:        "John",
+			lastName:    "Smith",
+			nationalID:  "45869584-M",
+			expectedErr: errors.New("customer contact details is mandatory"),
+			assertCustomer: func(customer *user.Customer) {
+				assert.Nil(t, customer)
+			},
+		},
 		"it should return an error if the customer email is missing": {
 			name:           "John",
 			lastName:       "Smith",

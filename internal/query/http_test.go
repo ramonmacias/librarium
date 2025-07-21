@@ -91,6 +91,7 @@ func TestFilterFromHTTPRequest(t *testing.T) {
 				},
 			},
 			query: func(req *http.Request) {
+				// The query builder is automatically sorting the parameters alphabetically
 				var b strings.Builder
 				b.WriteString("updated_at_to=2023-01-02")
 				b.WriteString("&updated_at_from=2022-01-02")

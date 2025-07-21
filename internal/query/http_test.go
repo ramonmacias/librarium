@@ -3,6 +3,7 @@ package query_test
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -77,6 +78,23 @@ func TestFilterFromHTTPRequest(t *testing.T) {
 				q.Add("created_at_from", "2022-01-02")
 				q.Add("created_at_to", "2023-01-02")
 				req.URL.RawQuery = q.Encode()
+			},
+		},
+		"it should return scalar gte and lte filter but checking the _from": {
+			expected: query.Filters{
+				"updated_at": query.Filter{
+					Type: query.FilterTypeRange,
+					Value: query.RangeFilter{
+						From: "2022-01-02",
+						To:   "2023-01-02",
+					},
+				},
+			},
+			query: func(req *http.Request) {
+				var b strings.Builder
+				b.WriteString("updated_at_to=2023-01-02")
+				b.WriteString("&updated_at_from=2022-01-02")
+				req.URL.RawQuery = b.String()
 			},
 		},
 		"it should return a mixed type of filters": {

@@ -1,0 +1,11 @@
+{
+    "category": "CD",
+    "info": {
+        "title": 50049,
+        "artist": "Michael Jackson",
+        "label": "Epic Records",
+        "track_count": 9,
+        "duration_min": 42,
+        "released_at": "2020-05-20T12:30:30Z"
+    }
+}

@@ -2,7 +2,6 @@ package catalog_test
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -161,9 +160,16 @@ func TestBuildAsset(t *testing.T) {
 func TestUnmarshallCreateAssetRequest(t *testing.T) {
 	testCases := map[string]struct {
 		data        func() []byte
-		expectedErr error
+		expectedErr string
 		assertAsset func(req *catalog.CreateAssetRequest)
 	}{
+		"it should return an error if the unmarshall to json fails": {
+			data: func() []byte {
+				return []byte(`{"category": "book", "info": {`)
+			},
+			expectedErr: "unexpected end of JSON input",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+		},
 		"it should unmarhsall a book asset": {
 			data: func() []byte {
 				buf, err := os.ReadFile("testdata/book.json")
@@ -185,6 +191,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Equal(t, publishedAt, book.PublishedAt)
 			},
 		},
+		"it should fail unmarshalling the book asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/book_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field Book.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+		},
 		"it should unmarshall a magazine asset": {
 			data: func() []byte {
 				buf, err := os.ReadFile("testdata/magazine.json")
@@ -205,6 +220,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Equal(t, publishedAt, magazine.PublishedAt)
 			},
 		},
+		"it should fail unmarshalling the magazine asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/magazine_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field Magazine.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+		},
 		"it should unmarshall a news paper asset": {
 			data: func() []byte {
 				buf, err := os.ReadFile("testdata/news_paper.json")
@@ -224,6 +248,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, publishedAt, newsPaper.PublishedAt)
 			},
+		},
+		"it should fail unmarshalling the news paper asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/news_paper_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field NewsPaper.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
 		},
 		"it should unmarshall a DVD asset": {
 			data: func() []byte {
@@ -246,6 +279,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Equal(t, releasedAt, dvd.ReleasedAt)
 			},
 		},
+		"it should fail unmarshalling the DVD asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/dvd_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field DVD.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+		},
 		"it should unmarshall a CD asset": {
 			data: func() []byte {
 				buf, err := os.ReadFile("testdata/cd.json")
@@ -266,6 +308,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, releasedAt, cd.ReleasedAt)
 			},
+		},
+		"it should fail unmarshalling the CD asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/cd_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field CD.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
 		},
 		"it should unmarshall a video game asset": {
 			data: func() []byte {
@@ -288,6 +339,15 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				assert.Equal(t, releasedAt, videoGame.ReleasedAt)
 			},
 		},
+		"it should fail unmarshalling the video game asset": {
+			data: func() []byte {
+				buf, err := os.ReadFile("testdata/video_game_mallformed.json")
+				assert.Nil(t, err)
+				return buf
+			},
+			expectedErr: "json: cannot unmarshal number into Go struct field VideoGame.title of type string",
+			assertAsset: func(req *catalog.CreateAssetRequest) {},
+		},
 		"it should return an error for a non expected asset": {
 			data: func() []byte {
 				buf, err := os.ReadFile("testdata/non_expected_asset.json")
@@ -295,7 +355,7 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 				return buf
 			},
 			assertAsset: func(req *catalog.CreateAssetRequest) {},
-			expectedErr: fmt.Errorf("unknown category: %s", "FAIL"),
+			expectedErr: "unknown category: FAIL",
 		},
 	}
 
@@ -303,7 +363,11 @@ func TestUnmarshallCreateAssetRequest(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			req := &catalog.CreateAssetRequest{}
 			err := req.UnmarshalJSON(tc.data())
-			assert.Equal(t, tc.expectedErr, err)
+			if tc.expectedErr != "" {
+				assert.Equal(t, tc.expectedErr, err.Error())
+			} else {
+				assert.Nil(t, err)
+			}
 			tc.assertAsset(req)
 		})
 	}

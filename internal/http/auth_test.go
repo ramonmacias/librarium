@@ -56,6 +56,7 @@ func TestNewAuthController(t *testing.T) {
 }
 
 func TestAuthControllerLogin(t *testing.T) {
+	t.Setenv("AUTH_SIGNING_KEY", "test_key")
 	ctrl := gomock.NewController(t)
 	userRepo := mocks.NewMockUserRepository(ctrl)
 	controller, err := http.NewAuthController(userRepo)

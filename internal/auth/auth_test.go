@@ -16,7 +16,6 @@ import (
 )
 
 func TestLogin(t *testing.T) {
-	t.Setenv("AUTH_SIGNING_KEY", "test_key")
 	expectedLibrarianID := uuid.New()
 	expectedPass, err := auth.HashPassword("expected_password")
 	assert.Nil(t, err)
@@ -24,10 +23,12 @@ func TestLogin(t *testing.T) {
 	testCases := map[string]struct {
 		loginReq      *auth.LoginRequest
 		librarian     *user.Librarian
+		signingKey    string
 		expectedErr   error
 		assertSession func(session *auth.Session)
 	}{
 		"it should return an error if the provided email doesn't matche the librarian's email": {
+			signingKey: "test_key",
 			loginReq: &auth.LoginRequest{
 				Email: "john@test.com",
 			},
@@ -38,6 +39,7 @@ func TestLogin(t *testing.T) {
 			assertSession: func(session *auth.Session) {},
 		},
 		"it should return an error if we can't match the passwords": {
+			signingKey: "test_key",
 			loginReq: &auth.LoginRequest{
 				Email:    "john@test.com",
 				Password: "000433929",
@@ -49,7 +51,22 @@ func TestLogin(t *testing.T) {
 			expectedErr:   errors.New("login bad credentials"),
 			assertSession: func(session *auth.Session) {},
 		},
+		"it should return an error if we fail while signing the token": {
+			signingKey: "",
+			loginReq: &auth.LoginRequest{
+				Email:    "john@test.com",
+				Password: "expected_password",
+			},
+			librarian: &user.Librarian{
+				ID:       expectedLibrarianID,
+				Email:    "john@test.com",
+				Password: expectedPass,
+			},
+			expectedErr:   errors.New("error signing token"),
+			assertSession: func(session *auth.Session) {},
+		},
 		"it should return no error and expected session created": {
+			signingKey: "test_key",
 			loginReq: &auth.LoginRequest{
 				Email:    "john@test.com",
 				Password: "expected_password",
@@ -70,6 +87,7 @@ func TestLogin(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
+			t.Setenv("AUTH_SIGNING_KEY", tc.signingKey)
 			session, err := auth.Login(tc.loginReq, tc.librarian)
 			assert.Equal(t, tc.expectedErr, err)
 			tc.assertSession(session)

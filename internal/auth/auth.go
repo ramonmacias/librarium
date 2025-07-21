@@ -66,8 +66,8 @@ func Login(loginReq *LoginRequest, librarian *user.Librarian) (s *Session, err e
 		ExpiresAt: jwt.NewNumericDate(s.ExpiresAt),
 	})
 	s.Token, err = tok.SignedString([]byte(os.Getenv("AUTH_SIGNING_KEY")))
-	if err != nil {
-		return nil, fmt.Errorf("error signing token %w", err)
+	if err != nil || os.Getenv("AUTH_SIGNING_KEY") == "" {
+		return nil, errors.New("error signing token")
 	}
 	return s, nil
 }

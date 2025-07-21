@@ -10,9 +10,10 @@ import (
 )
 
 var fields = query.DatabaseFields{
-	"id":           "id",
-	"some_field":   "some_table.some_field",
-	"custom_field": "custom_field",
+	"id":               "id",
+	"some_field":       "some_table.some_field",
+	"some_other_field": "some_table.some_other_field",
+	"custom_field":     "custom_field",
 }
 
 func TestSQLPaginateBy(t *testing.T) {
@@ -47,6 +48,13 @@ func TestSQLSortBy(t *testing.T) {
 		"it should apply the expected sort to the query": {
 			sorts:       sorts,
 			expectedRes: "ORDER BY some_table.some_field DESC",
+		},
+		"it should apply multiple sorts": {
+			sorts: []query.Sorting{
+				{SortBy: "some_field", Descending: true},
+				{SortBy: "some_other_field", Descending: false},
+			},
+			expectedRes: "ORDER BY some_table.some_field DESC, some_table.some_other_field ASC",
 		},
 		"it should apply no sorts if not within the expected fields": {
 			sorts:       []query.Sorting{{SortBy: "invalid-field"}},
